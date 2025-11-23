@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神秘问卷</title>
+    
+    <style>
+        /* 全局样式和基础字体设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body和容器基础样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #FFFFFF;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 导航栏样式 */
+        nav {
+            padding: 20px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4A4A4A;
+            text-decoration: none;
+        }
+
+        nav ul {
+            list-style: none;
+        }
+
+        nav ul li {
+            display: inline-block;
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            color: #6C63FF;
+        }
+
+        /* 英雄区域样式 */
+        header.hero {
+            padding: 60px 0;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+        }
+
+        header.hero .container {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-image {
+            flex: 1;
+            text-align: center;
+        }
+
+        .hero-image img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        h1 {
+            font-size: 3em;
+            line-height: 1.2;
+            margin-bottom: 15px;
+            color: #222;
+        }
+
+        .hero-text p {
+            font-size: 1.15em;
+            margin-bottom: 30px;
+            color: #555;
+        }
+
+        .hero-text span {
+            display: block;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        /* 关键行动按钮样式 */
+        .cta-button {
+            display: inline-block;
+            background-color: #6C63FF;
+            color: #FFFFFF;
+            padding: 15px 35px;
+            font-size: 1.1em;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .cta-button:hover {
+            background-color: #574BDB;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Features 样式 */
+        .value-prop {
+            background-color: #f9f9f9;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 2.2em;
+            margin-bottom: 40px;
+            color: #222;
+        }
+
+        .features {
+            display: flex;
+            justify-content: space-around;
+            gap: 30px;
+        }
+
+        .feature-item {
+            flex-basis: 30%;
+        }
+
+        .feature-item img {
+            height: 50px;
+            margin-bottom: 15px;
+        }
+
+        .feature-item h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        /* 测试流程样式 */
+        .how-it-works {
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .how-it-works ol {
+            list-style: none;
+            display: flex;
+            justify-content: space-around;
+            gap: 30px;
+            counter-reset: steps-counter;
+        }
+
+        .how-it-works li {
+            flex-basis: 30%;
+            position: relative;
+        }
+
+        /* CSS伪元素制作数字序号 */
+        .how-it-works li::before {
+            counter-increment: steps-counter;
+            content: counter(steps-counter);
+            display: block;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 0 auto 20px auto;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            color: #6C63FF;
+        }
+
+        /* Final CTA 样式 */
+        .final-cta {
+            background-color: #333;
+            color: #FFFFFF;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .final-cta h2 {
+            color: #FFFFFF;
+        }
+        
+        .final-cta p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            color: #f0f0f0;
+        }
+
+        /* 页脚样式 */
+        footer {
+            padding: 40px 0;
+            text-align: center;
+            border-top: 1px solid #f0f0f0;
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        footer a {
+            color: #666;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式设计样式 */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.2em; }
+            
+            /* 导航栏 */
+            nav ul {
+                display: none;
+            }
+
+            /* 英雄区 */
+            header.hero .container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            /* 在小屏幕上隐藏插图 */
+            .hero-image {
+                display: none;
+            }
+
+            /* 特色区 */
+            .features {
+                flex-direction: column;
+            }
+            
+            .feature-item {
+                margin-bottom: 30px;
+            }
+            
+            /* 流程区 */
+            .how-it-works ol {
+                flex-direction: column;
+            }
+            
+            .how-it-works li {
+                margin-bottom: 30px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="container">
+            <a href="/" class="logo">神秘问卷</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <div class="hero-text">
+                <h1>快给我们做个问卷😄</h1>
+                <p>只需10000分钟谢谢</p>
+                <a href="test.html" class="cta-button">开始测试</a>
+                <span>已有0人完成测试</span>
+            </div>
+            <div class="hero-image">
+                <img src="test_image.jpg" alt="神秘图片">
+            </div>
+        </div>
+    </header>
+
+    <section class="how-it-works">
+        <div class="container">
+            <h2>测试流程</h2>
+            <ol>
+                <li><strong>回答</strong><br>诚实地回答一系列问题。</li>
+                <li><strong>分析</strong><br>我们的算法将计算你的结果。</li>
+                <li><strong>探索</strong><br>获取你专属的深度报告。</li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="final-cta">
+        <div class="container">
+            <h2>？</h2>
+            <p>快点来测</p>
+            <a href="test.html" class="cta-button">立即开始测试</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Timetopia 保留所有权利</p>
+        </div>
+    </footer>
+
+</body>
+</html>

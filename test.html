@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>能力倾向测试</title>
+    
+    <style>
+        /* --- 全局和问卷基础样式 --- */
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            background-color: #f4f7f6; 
+            color: #333;
+            padding: 20px;
+            /* 消除移动端点击时的瞬时高亮效果 */
+            -webkit-tap-highlight-color: transparent; 
+        }
+        
+        /* --- 视图 1: 用户名输入界面样式 --- */
+        .start-box {
+            max-width: 450px;
+            margin: 100px auto;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .start-box h1 {
+            color: #6C63FF;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .start-box p {
+            color: #777;
+            margin-bottom: 30px;
+        }
+        .start-box input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        #start-button {
+            background-color: #6C63FF;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #start-button:hover {
+            background-color: #574BDB;
+        }
+
+        /* --- 视图 2: 问卷基础样式 (原 .question-box) --- */
+        .question-box {
+            max-width: 700px;
+            margin: 50px auto;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            /* 禁止问卷框内的所有文本和元素被选中，消除光标/选区 */
+            user-select: none; 
+        }
+        h3 {
+            font-size: 1.8em;
+            margin-bottom: 40px;
+            color: #4A4A4A;
+        }
+        
+        /* --- 进度条样式 --- */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%; 
+            background-color: #6C63FF;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        /* --- 5. 圆圈选项样式 --- */
+        .options-container {
+            display: flex;
+            flex-direction: row; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 0 20px;
+            margin: 40px auto;
+        }
+        
+        .option-circle {
+            width: 40px; 
+            height: 40px;
+            border-radius: 50%; 
+            border: 3px solid #ccc;
+            background-color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none; 
+            outline: none;
+        }
+
+        /* 鼠标悬停效果 */
+        .option-circle:hover {
+            border-color: #6C63FF; 
+            transform: scale(1.1);
+        }
+        
+        /* 选中状态 (点击后) */
+        .option-circle.active {
+            border-color: #6C63FF;
+            background-color: #6C63FF;
+            box-shadow: 0 0 0 5px rgba(108, 99, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* 消除圆圈被按下时的闪烁 */
+        .option-circle:active {
+            transform: scale(1.05); 
+        }
+        
+        /* --- 选项文字描述定位 --- */
+        .label-positions-container {
+            display: flex;
+            justify-content: space-between; 
+            width: 100%; 
+            padding: 0 20px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        .label-positions-container span {
+            text-align: center;
+            flex-basis: 33.33%; 
+        }
+
+        .label-positions-container .label-left {
+            text-align: left;
+            transform: translateX(-13px); 
+        }
+
+        .label-positions-container .label-center {
+            transform: translateX(-20px); 
+        }
+
+        .label-positions-container .label-right {
+            text-align: right;
+            transform: translateX(-33px); 
+        }
+        
+        /* --- 按钮样式 --- */
+        #next-button {
+            background-color: #6C63FF;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+            margin-top: 50px;
+        }
+        #next-button:hover {
+            background-color: #574BDB;
+        }
+        #next-button:active {
+            background-color: #574BDB; 
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-view" class="start-box">
+        <h1>欢迎参加能力倾向测试</h1>
+        <p>请留下您的名称，然后点击开始。</p>
+        
+        <input type="text" id="username-input" placeholder="请输入您的名称" maxlength="15">
+        
+        <button id="start-button">开始测试</button>
+    </div>
+
+    <div id="quiz-view" class="question-box" style="display: none;">
+        <div id="progress-bar-container" class="progress-bar">
+            <div id="progress-fill" class="progress-bar-fill" style="width: 0%;"></div> 
+        </div>
+        
+        <p id="question-counter">第 1 题 / 共 50 题</p> 
+        
+        <h3 id="question-text">问题内容将被加载到这里。</h3> 
+        
+        <div id="options-container" class="options-container">
+            <div class="option-circle" data-value="-2" title="完全不同意"></div>
+            <div class="option-circle" data-value="-1" title="有点不同意"></div>
+            <div class="option-circle" data-value="0" title="中立"></div>
+            <div class="option-circle" data-value="1" title="有点同意"></div>
+            <div class="option-circle" data-value="2" title="完全同意"></div>
+        </div>
+        
+        <div class="label-positions-container">
+            <span class="label-left">完全不同意</span>
+            <span class="label-center">中立</span>
+            <span class="label-right">完全同意</span>
+        </div>
+        
+        <button id="next-button">下一题</button>
+    </div>
+
+    <script src="questions.js"></script> 
+
+    <script>
+        // --- 视图 DOM 引用 ---
+        const startView = document.getElementById('start-view');
+        const quizView = document.getElementById('quiz-view');
+        
+        // --- 开始界面 DOM 引用 ---
+        const usernameInput = document.getElementById('username-input');
+        const startButton = document.getElementById('start-button');
+        
+        // --- 问卷 DOM 引用 ---
+        const questionTextElement = document.getElementById('question-text');
+        const questionCounterElement = document.getElementById('question-counter');
+        const progressFillElement = document.getElementById('progress-fill');
+        const nextButton = document.getElementById('next-button');
+        const circles = document.querySelectorAll('.option-circle');
+
+        // --- 问卷状态变量 ---
+        let currentQuestionIndex = 0;
+        let username = "";
+        let totalScores = { 
+            "学习动机": 0, 
+            "学习方式": 0, 
+            "信息处理": 0, 
+            "思维": 0,
+            "情绪": 0,
+            "社交沟通": 0,
+            "自我管理": 0,
+            "创造": 0,
+            "价值观": 0,
+            "适应力": 0
+        }; 
+
+        // ----------------------------------------------------
+        // **!!! 核心配置 !!!**
+        // ----------------------------------------------------
+        // 指向 Netlify Functions 默认路径下的 save_data 函数
+		const BACKEND_SAVE_URL = '/.netlify/functions/save_data';
+
+        // ----------------------------------------------------
+        // 1. 视图切换和初始化函数
+        // ----------------------------------------------------
+        function startQuiz() {
+            if (!username) {
+                username = usernameInput.value.trim();
+            }
+
+            if (!username) {
+                alert('请输入一个名称才能开始测试！');
+                return;
+            }
+
+            // 在此模式下，我们不再需要存储 quizUsername
+            // localStorage.setItem('quizUsername', username); 
+            
+            startView.style.display = 'none';
+            quizView.style.display = 'block';
+
+            renderQuestion(currentQuestionIndex);
+        }
+
+        // ----------------------------------------------------
+        // 2. 渲染当前问题内容和进度
+        // ----------------------------------------------------
+        function renderQuestion(index) {
+            const question = QUIZ_DATA[index];
+            if (!question) return;
+
+            questionTextElement.textContent = question.question;
+            questionCounterElement.textContent = `第 ${index + 1} 题 / 共 ${QUIZ_DATA.length} 题`;
+
+            const progress = (index + 1) / QUIZ_DATA.length * 100;
+            progressFillElement.style.width = `${progress}%`;
+
+            circles.forEach(c => c.classList.remove('active'));
+        }
+
+        // ----------------------------------------------------
+        // 3. 结果计算、本地存储和后端发送逻辑
+        // ----------------------------------------------------
+        function showResults() {
+            const maxScorePerDimension = 10;
+            const normalizedScores = {};
+
+            // 1. 计算标准化分数
+            for (const dimension in totalScores) {
+                const score = totalScores[dimension];
+                const normalizedScore = ((score + maxScorePerDimension) / (2 * maxScorePerDimension)) * 10;
+                normalizedScores[dimension] = parseFloat(normalizedScore.toFixed(1)); 
+            }
+
+            // 2. 准备发送给后端的数据对象
+            const dataToSend = {
+                timestamp: new Date().toISOString(),
+                username: username,
+                // 只发送标准化分数，后端容易处理
+                scores: normalizedScores
+            };
+
+            // 3. (可选) 存储本次分数，用于 results.html 立即渲染
+            localStorage.setItem('currentQuizNormalizedResults', JSON.stringify(normalizedScores));
+            localStorage.setItem('quizUsername', username); // 临时存储用户名用于 results 页面显示
+
+            // 4. 将数据发送到后端
+            sendDataToServer(dataToSend);
+            
+            // 5. 准备跳转到结果展示页面
+            quizView.innerHTML = `<h2>正在计算您的结果...</h2><p>数据正在安全保存中...</p>`;
+            
+            // 6. 延时跳转到结果页面
+            setTimeout(() => {
+                    window.location.href = 'results.html'; 
+            }, 500); // 延迟 0.5 秒，给用户一个“数据正在处理”的感觉
+        }
+
+        // 异步提交测验结果到后端
+        function submitQuiz() {
+            // 1. 获取标准化分数 (normalizedScores)
+            const normalizedResultsString = localStorage.getItem('currentQuizNormalizedResults');
+            const username = localStorage.getItem('quizUsername') || '匿名用户';
+            
+            if (!normalizedResultsString) {
+                alert('无法找到测试结果，请重新测试！');
+                return;
+            }
+            
+            const normalizedScores = JSON.parse(normalizedResultsString);
+            
+            // 2. 准备发送给 PHP 的数据
+            const dataToSend = {
+                username: username,
+                results: normalizedScores
+            };
+
+            // 3. 通过 AJAX 将数据发送到 PHP 脚本
+            fetch('save_data.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataToSend),
+            })
+            .then(response => {
+                // 确保响应是 OK
+                if (!response.ok) {
+                    throw new Error('网络请求失败，状态码: ' + response.status);
+                }
+                return response.text(); // 接收 PHP 返回的文本 (可能是成功的消息)
+            })
+            .then(text => {
+                console.log('数据保存成功:', text);
+                // 成功保存后，跳转到结果页面
+                window.location.href = 'results.html';
+            })
+            .catch(error => {
+                console.error('数据保存失败:', error);
+                alert('结果保存到服务器失败，但本地结果已生成。');
+                // 即使保存失败，仍然可以跳转到结果页查看本地结果
+                window.location.href = 'results.html';
+            });
+        }
+
+        // 异步发送数据到后端脚本
+        function sendDataToServer(data) {
+            fetch(BACKEND_SAVE_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络响应失败或后端脚本错误');
+                }
+                return response.text(); // 读取后端返回的文本
+            })
+            .then(message => {
+                console.log('数据发送成功，后端返回:', message);
+            })
+            .catch(error => {
+                console.error('数据发送失败:', error);
+                // 可以在这里向用户显示错误提示
+                // alert('抱歉，数据保存到服务器失败。请联系管理员。');
+            });
+        }
+        
+        // ----------------------------------------------------
+        // 4. 事件监听器设置
+        // ----------------------------------------------------
+        startButton.addEventListener('click', startQuiz);
+        usernameInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); 
+                startQuiz();
+            }
+        });
+
+        circles.forEach(circle => {
+            circle.addEventListener('click', function() {
+                circles.forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        nextButton.addEventListener('click', function() {
+            const activeCircle = document.querySelector('.option-circle.active');
+            if (!activeCircle) {
+                alert('请先选择一个选项！');
+                return;
+            }
+            let score = parseInt(activeCircle.dataset.value); 
+            const currentQuestion = QUIZ_DATA[currentQuestionIndex];
+            
+            if (currentQuestion.isReversed) {
+                score = -score;
+            }
+            
+            totalScores[currentQuestion.dimension] += score;
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < QUIZ_DATA.length) {
+                renderQuestion(currentQuestionIndex);
+            } else {
+                showResults();
+            }
+        });
+
+        // 键盘快捷键监听
+        document.addEventListener('keydown', function(event) {
+            if (quizView.style.display !== 'none') {
+                event.preventDefault(); 
+                const key = event.key;
+
+                if (key === 'Enter') {
+                    nextButton.click();
+                } else {
+                    const selectedIndex = parseInt(key);
+                    if (selectedIndex >= 1 && selectedIndex <= 5) {
+                        const targetCircle = circles[selectedIndex - 1];
+                        if (targetCircle) {
+                            circles.forEach(c => c.classList.remove('active'));
+                            targetCircle.classList.add('active');
+                        }
+                    }
+                }
+            }
+        });
+
+        // ----------------------------------------------------
+        // 5. 首次加载时检查状态
+        // ----------------------------------------------------
+        function initApp() {
+            const storedUsername = localStorage.getItem('quizUsername');
+            
+            // 恢复之前输入的用户名
+            if (storedUsername) {
+                username = storedUsername; 
+                usernameInput.value = storedUsername;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

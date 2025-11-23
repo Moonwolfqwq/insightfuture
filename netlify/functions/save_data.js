@@ -1,38 +1,50 @@
-// 导入 Google Sheets 库 (需要在您的 package.json 中添加 "googleapis")
-const { GoogleSheets } = require('googleapis');
+// ✅ 修正后的代码：正确导入 google 顶级对象
+// 必须确保您的 package.json 中包含 "googleapis" 依赖
+const { google } = require('googleapis'); 
 
 // 导入环境变量
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
-// 初始化 Google Sheets 客户端
+/**
+ * 初始化 Google Sheets 客户端并进行身份验证
+ */
 async function getSheetClient() {
-    // 使用服务账户凭证
-    const auth = new GoogleSheets.auth.JWT({
+    // ⚠️ 修正：使用 google.auth.JWT 进行身份验证
+    const auth = new google.auth.JWT({
         email: process.env.GOOGLE_SHEET_CLIENT_EMAIL,
-        key: process.env.GOOGLE_SHEET_PRIVATE_KEY.replace(/\\n/g, '\n'), // 替换换行符
+        
+        // 确保私钥中的换行符正确处理
+        key: process.env.GOOGLE_SHEET_PRIVATE_KEY.replace(/\\n/g, '\n'), 
+        
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
+    
     await auth.authorize();
     
-    return GoogleSheets({ auth, version: 'v4' });
+    // ⚠️ 修正：使用 google.sheets({ auth, version: 'v4' }) 获取客户端
+    return google.sheets({ auth, version: 'v4' });
 }
 
 // Netlify Function 的入口点
 exports.handler = async (event, context) => {
+    // 检查请求方法是否为 POST
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
     try {
+        // 解析前端发送的 JSON 数据
         const body = JSON.parse(event.body);
         const username = body.username || 'Anonymous';
         const scores = body.scores; // 这是一个包含 { dimension: score } 的对象
         const timestamp = new Date().toISOString();
 
+        // 验证数据完整性
         if (!scores || typeof scores !== 'object') {
             return { statusCode: 400, body: 'Missing or invalid scores data.' };
         }
 
+        // 获取经过身份验证的 Google Sheets 客户端
         const sheets = await getSheetClient();
         const dataRows = [];
         
@@ -44,7 +56,7 @@ exports.handler = async (event, context) => {
                     timestamp,
                     username,
                     dimension,
-                    scores[dimension] // 标准化分数 (0.0 - 10.0)
+                    scores[dimension] // 假设这是分数数据
                 ]);
             }
         }
@@ -61,6 +73,7 @@ exports.handler = async (event, context) => {
 
         console.log(`Successfully appended ${result.data.updates.updatedCells} cells.`);
 
+        // 返回成功响应
         return {
             statusCode: 200,
             body: JSON.stringify({ message: 'Results saved to Google Sheets.', timestamp }),
@@ -68,9 +81,13 @@ exports.handler = async (event, context) => {
 
     } catch (error) {
         console.error('Error saving data:', error);
+        // 返回详细错误信息，有助于调试
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Internal Server Error', details: error.message }),
+            body: JSON.stringify({ 
+                error: 'Internal Server Error', 
+                details: error.message 
+            }),
         };
     }
 };

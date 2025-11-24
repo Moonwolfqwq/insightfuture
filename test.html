@@ -220,298 +220,283 @@
         <button id="next-button">下一题</button>
     </div>
 
-    <script src="questions.js"></script> 
+	<script type="module">
+    // ----------------------------------------------------
+    // 1. 模块导入
+    // ----------------------------------------------------
+    // 导入问题数据 (default export) 和 维度顺序 (named export)
+    import questions, { SCALES_ORDER } from './questions.js';
 
-    <script>
-			// ----------------------------------------------------
-			// 1. 导入数据和常量
-			// ----------------------------------------------------
-			// ⚠️ 假设 questions.js 和 test.html 位于同级目录
-			// ⚠️ 如果您使用 ES6 模块，请将以下 require 语句替换为 import
-			// 示例：const questions = require('./questions').default;
-			// 由于无法直接 require，我将代码结构改为假设您已将 questions.js 内容复制到此文件或使用模块导入。
-			
-			// 为了让代码能运行，您需要确保 questions 数组和 SCALES_ORDER 常量在此处可用。
-			// 如果您保留了单独的 questions.js 文件，请将该文件内容复制到这里来运行。
+    // ----------------------------------------------------
+    // 2. 常量和 DOM 元素定义
+    // ----------------------------------------------------
+    
+    // 定义 16 个维度的初始值模板
+    const SCALES_TEMPLATE = SCALES_ORDER.reduce((acc, scale) => {
+        acc[scale] = 0;
+        return acc;
+    }, {});
+    
+    const TOTAL_PRACTICAL_QUESTIONS = 64; 
+    const MAX_RAW_SCORE_PER_QUESTION = 2; // 单个问题的最高绝对分 (来自 -2 到 2)
+    const BACKEND_SAVE_URL = '/.netlify/functions/save_data';
 
-			const SCALES_ORDER = [
-				'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti',
-				'学习动机', '学习方式', '信息处理', '思维', '情绪', '社交沟通', '自我管理', '创造'
-			];
-			
-			// 定义 16 个维度的初始值
-			const SCALES_TEMPLATE = SCALES_ORDER.reduce((acc, scale) => {
-				acc[scale] = 0;
-				return acc;
-			}, {});
-			
-			const TOTAL_PRACTICAL_QUESTIONS = 64; 
-			const MAX_ANSWER_SCORE = 5; // 单个问题的最高分
+    // --- 视图 DOM 引用 (使用您 HTML 中的实际 ID) ---
+    const startView = document.getElementById('start-view');
+    const quizView = document.getElementById('quiz-view');
+    const usernameInput = document.getElementById('username-input'); // 修正后的 ID
+    const startButton = document.getElementById('start-button');
+    const questionTextElement = document.getElementById('question-text');
+    const questionCounterElement = document.getElementById('question-counter'); // 进度条文本
+    const progressFillElement = document.getElementById('progress-fill'); // 进度条填充
+    const nextButton = document.getElementById('next-button');
+    const circles = document.querySelectorAll('.option-circle'); // 答案圆圈
 
-			// ----------------------------------------------------
-			// 2. DOM 元素和状态
-			// ----------------------------------------------------
-			const startView = document.getElementById('startView');
-			const quizView = document.getElementById('quizView');
-			const usernameInput = document.getElementById('username');
-			const startButton = document.getElementById('startButton');
-			const questionTextElement = document.getElementById('questionText');
-			const progressText = document.getElementById('progressText');
-			const progressFilled = document.getElementById('progressFilled');
-			const circles = document.querySelectorAll('.answer-circle');
-			const nextButton = document.getElementById('nextButton');
+    // --- 问卷状态变量 ---
+    let currentQuestionIndex = 0;
+    let username = "";
+    let userAnswers = []; // 存储 { id: questionId, value: score (-2 to 2) }
+    
+    // ----------------------------------------------------
+    // 3. 核心功能函数
+    // ----------------------------------------------------
 
-			let currentQuestionIndex = 0;
-			let userAnswers = []; // 存储 { id: questionId, value: score }
-			let username = '';
-			
-			// ----------------------------------------------------
-			// 3. 核心功能函数
-			// ----------------------------------------------------
+    // A. 视图切换和初始化函数
+    function startQuiz() {
+        username = usernameInput.value.trim();
+        if (username.length < 2) {
+            alert('请输入您的名称！');
+            return;
+        }
+        localStorage.setItem('quizUsername', username);
 
-			// A. 渲染问题
-			function renderQuestion(index) {
-				// 确保 questions 数组已经被正确加载
-				if (!window.questions || index >= questions.length) {
-					console.error("Questions array not loaded or index out of bounds.");
-					return;
-				}
+        startView.style.display = 'none';
+        quizView.style.display = 'block';
 
-				const question = questions[index];
-				questionTextElement.textContent = `${index + 1}. ${question.text}`;
+        if (questions.length === 0) {
+            alert('问题数据未加载，请检查 questions.js 文件。');
+            return;
+        }
+        renderQuestion(currentQuestionIndex);
+    }
 
-				// 清除上一个问题的选中状态
-				circles.forEach(c => c.classList.remove('active'));
-				nextButton.disabled = true;
+    // B. 渲染当前问题内容和进度
+    function renderQuestion(index) {
+        if (index >= questions.length) return;
 
-				// 更新进度条和文本
-				progressText.textContent = `第 ${index + 1} 题 / ${questions.length} 题`;
-				const percentage = ((index + 1) / questions.length) * 100;
-				progressFilled.style.width = `${percentage}%`;
+        const question = questions[index];
+        questionTextElement.textContent = question.text;
+        questionCounterElement.textContent = `第 ${index + 1} 题 / 共 ${questions.length} 题`;
 
-				// 尝试恢复答案
-				const existingAnswer = userAnswers.find(a => a.id === question.id);
-				if (existingAnswer) {
-					const selectedCircle = document.querySelector(`.answer-circle[data-score="${existingAnswer.value}"]`);
-					if (selectedCircle) {
-						selectedCircle.classList.add('active');
-						nextButton.disabled = false;
-					}
-				}
-			}
+        const progress = (index + 1) / questions.length * 100;
+        progressFillElement.style.width = `${progress}%`;
 
-			// B. 计分逻辑
-			function calculateScores() {
-				let results = { ...SCALES_TEMPLATE }; // 从模板开始
-				const MAX_SCORE = MAX_ANSWER_SCORE;
+        circles.forEach(c => c.classList.remove('active'));
+        nextButton.disabled = true;
 
-				// Helper 函数：计算最终分数 (处理反向计分)
-				const getFinalScore = (direction, rawScore) => {
-					if (direction === -1) {
-						// 反向计分: 1 -> 5, 2 -> 4, ..., 5 -> 1
-						return (MAX_SCORE + 1) - rawScore;
-					}
-					return rawScore; // 正向计分
-				};
+        // 恢复答案 (如果用户返回)
+        const existingAnswer = userAnswers.find(a => a.id === question.id);
+        if (existingAnswer) {
+            const selectedCircle = document.querySelector(`.option-circle[data-value="${existingAnswer.value}"]`);
+            if (selectedCircle) {
+                selectedCircle.classList.add('active');
+                nextButton.disabled = false;
+            }
+        }
+    }
 
-				userAnswers.forEach(answer => {
-					const question = questions.find(q => q.id === answer.id);
-					const score = answer.value;
+    // C. 计分逻辑：计算 16 个标准化分数 (0.0 - 10.0)
+    function calculateScores() {
+        let results = { ...SCALES_TEMPLATE }; 
 
-					if (!question || question.type === 'filler') {
-						return; // 忽略填充问题
-					}
+        // Helper 函数：计算最终分数 (处理反向计分)
+        const getFinalScore = (direction, rawScore) => {
+            if (direction === -1) {
+                return -rawScore; // 反向计分，例如：选 2 (-2) 变成 -2 (2)
+            }
+            return rawScore; 
+        };
 
-					// 1. 荣格八维 (功能) 计分
-					if (question.func_scale && question.func_direction !== 0) {
-						const finalScore = getFinalScore(question.func_direction, score);
-						results[question.func_scale] += finalScore;
-					}
+        // 1. 累加原始分数
+        userAnswers.forEach(answer => {
+            const question = questions.find(q => q.id === answer.id);
+            const score = answer.value; 
 
-					// 2. 人格可发展领域 (领域) 计分
-					if (question.dev_scale && question.dev_direction !== 0) {
-						const finalScore = getFinalScore(question.dev_direction, score);
-						results[question.dev_scale] += finalScore;
-					}
-				});
-				
-				// --- 最终数据准备：标准化分数 ---
-				
-				let finalNormalizedScores = {};
-				
-				SCALES_ORDER.forEach(scaleName => {
-					const rawScore = results[scaleName];
-					
-					// ⚠️ 关键：计算每个维度的最大可能得分
-					// 您需要根据每个维度实际关联的问题数量来精确计算
-					// 简单示例: 假设每个维度平均关联 8 个实用问题 (8 * 5 = 40 分)
-					const assumedMaxScoreForScale = 40; 
-					
-					// 转换为 0.0 到 10.0 的范围 (四舍五入到一位小数)
-					const normalizedScore = (rawScore / assumedMaxScoreForScale) * 10;
-					finalNormalizedScores[scaleName] = parseFloat(normalizedScore.toFixed(1));
-				});
-				
-				return finalNormalizedScores; // 返回包含 16 个标准化分数 (例如 0.0 - 10.0) 的对象
-			}
+            if (!question || question.type === 'filler') {
+                return; // 忽略填充问题
+            }
 
-			// C. 发送数据到 Netlify Function
-			async function sendDataToServer(username, finalScores) {
-				const BACKEND_SAVE_URL = '/.netlify/functions/save_data';
+            // 1. 荣格八维 (功能) 计分
+            if (question.func_scale && question.func_direction !== 0) {
+                const finalScore = getFinalScore(question.func_direction, score);
+                results[question.func_scale] += finalScore;
+            }
 
-				const dataToSend = {
-					username: username,
-					scores: finalScores // 包含 16 个维度分数的对象
-				};
-				
-				try {
-					const response = await fetch(BACKEND_SAVE_URL, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(dataToSend),
-					});
+            // 2. 人格可发展领域 (领域) 计分
+            if (question.dev_scale && question.dev_direction !== 0) {
+                const finalScore = getFinalScore(question.dev_direction, score);
+                results[question.dev_scale] += finalScore;
+            }
+        });
+        
+        // 2. 标准化分数
+        let finalNormalizedScores = {};
+        
+        SCALES_ORDER.forEach(scaleName => {
+            const rawScore = results[scaleName];
+            
+            // ⚠️ 假设每个维度平均有 8 个问题计分 (N=8)
+            // 请根据您最终的 questions.js 实际分配的问题数量来调整这个值！
+            const assumedQuestionsPerScale = 8; 
+            const maxPossibleRawScore = assumedQuestionsPerScale * MAX_RAW_SCORE_PER_QUESTION; // 16 (8 * 2)
 
-					if (!response.ok) {
-						const errorData = await response.json();
-						console.error('Backend save failed:', errorData);
-						alert('数据保存失败，请联系管理员。错误详情已打印到控制台。');
-						return false;
-					}
-					console.log('Results successfully saved to Google Sheets.');
-					return true;
-				} catch (error) {
-					console.error('Network or Function Error:', error);
-					alert('网络或服务器错误，数据保存失败。');
-					return false;
-				}
-			}
+            // 标准化公式: 将 [-Max, Max] 范围映射到 [0.0, 10.0]
+            const numerator = rawScore + maxPossibleRawScore;
+            const denominator = 2 * maxPossibleRawScore; 
 
-			// D. 显示结果（并发送数据）
-			async function showResults() {
-				const finalScores = calculateScores(); // 获取 16 个标准化分数
+            const normalizedScore = (numerator / denominator) * 10;
+            finalNormalizedScores[scaleName] = parseFloat(normalizedScore.toFixed(1));
+        });
+        
+        return finalNormalizedScores; 
+    }
 
-				// 存储分数和用户名，用于结果页显示
-				localStorage.setItem('quizResults', JSON.stringify(finalScores)); 
-				localStorage.setItem('quizUsername', username);
-				
-				// 关键：发送数据到后端
-				const saveSuccess = await sendDataToServer(username, finalScores);
-				
-				if (saveSuccess) {
-					// 如果数据保存成功，则跳转到结果页
-					window.location.href = 'results.html';
-				} else {
-					// 如果保存失败，可以在此处选择是否仍跳转或停留
-					// 为了安全，如果保存失败，最好停留并提示用户重试
-				}
-			}
+    // D. 发送数据到 Netlify Function
+    async function sendDataToServer(username, finalScores) {
+        const dataToSend = {
+            username: username,
+            scores: finalScores 
+        };
+        
+        try {
+            const response = await fetch(BACKEND_SAVE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text(); 
+                console.error('Backend save failed:', errorText);
+                return false;
+            }
+            console.log('Results successfully saved to Google Sheets.');
+            return true;
+        } catch (error) {
+            console.error('Network or Function Error:', error);
+            return false;
+        }
+    }
+
+    // E. 显示结果（并发送数据）
+    async function showResults() {
+        const finalScores = calculateScores(); 
+
+        localStorage.setItem('quizResults', JSON.stringify(finalScores)); 
+        
+        nextButton.disabled = true; 
+        nextButton.textContent = '正在提交...';
+
+        const saveSuccess = await sendDataToServer(username, finalScores);
+        
+        if (saveSuccess) {
+            window.location.href = 'results.html';
+        } else {
+            alert('数据保存失败。将跳转到结果页查看本地结果。');
+            nextButton.disabled = false;
+            nextButton.textContent = '下一题 / 查看结果';
+            setTimeout(() => {
+                window.location.href = 'results.html'; 
+            }, 500);
+        }
+    }
+
+    // ----------------------------------------------------
+    // 4. 事件监听器和初始化
+    // ----------------------------------------------------
+    
+    // startButton: 切换视图并渲染第一个问题
+    startButton.addEventListener('click', startQuiz);
+    usernameInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); 
+            startQuiz();
+        }
+    });
 
 
-			// ----------------------------------------------------
-			// 4. 事件监听器
-			// ----------------------------------------------------
+    // 答案选择
+    circles.forEach((circle) => {
+        circle.addEventListener('click', function() {
+            circles.forEach(c => c.classList.remove('active'));
+            circle.classList.add('active');
+            nextButton.disabled = false;
+        });
+    });
 
-			// 开始按钮：切换视图并渲染第一个问题
-			startButton.addEventListener('click', function() {
-				// 验证用户名
-				username = usernameInput.value.trim();
-				if (username.length < 2) {
-					alert('用户名至少需要两个字符。');
-					return;
-				}
+    // nextButton: 保存答案并前进
+    nextButton.addEventListener('click', function() {
+        const selectedCircle = document.querySelector('.option-circle.active');
+        if (!selectedCircle) {
+            alert('请先选择一个选项！');
+            return;
+        }
 
-				// 存储用户名
-				localStorage.setItem('quizUsername', username);
+        const score = parseInt(selectedCircle.getAttribute('data-value')); // -2 到 2
+        const questionId = questions[currentQuestionIndex].id;
 
-				startView.style.display = 'none';
-				quizView.style.display = 'block';
+        const existingIndex = userAnswers.findIndex(a => a.id === questionId);
+        if (existingIndex !== -1) {
+            userAnswers[existingIndex].value = score;
+        } else {
+            userAnswers.push({ id: questionId, value: score });
+        }
 
-				// ⚠️ 确保 questions 数组在此处已加载 (如果使用模块导入，需要调整结构)
-				if (typeof questions === 'undefined' || questions.length === 0) {
-					alert('问题数据未加载，请检查 questions.js 文件。');
-					return;
-				}
-				renderQuestion(currentQuestionIndex);
-			});
+        currentQuestionIndex++;
 
-			// 答案选择：选中圆圈并启用下一题按钮
-			circles.forEach((circle) => {
-				circle.addEventListener('click', function() {
-					circles.forEach(c => c.classList.remove('active'));
-					circle.classList.add('active');
-					nextButton.disabled = false;
-				});
-			});
+        if (currentQuestionIndex < questions.length) {
+            renderQuestion(currentQuestionIndex);
+        } else {
+            showResults(); 
+        }
+    });
 
-			// 下一题按钮：保存答案并前进
-			nextButton.addEventListener('click', function() {
-				const selectedCircle = document.querySelector('.answer-circle.active');
-				if (!selectedCircle) {
-					alert('请选择一个答案。');
-					return;
-				}
+    // 键盘快捷键监听
+    document.addEventListener('keydown', function(event) {
+        if (quizView.style.display !== 'none') {
+            const key = event.key;
 
-				const score = parseInt(selectedCircle.getAttribute('data-score'));
-				const questionId = questions[currentQuestionIndex].id;
+            if (key === 'Enter') {
+                event.preventDefault(); 
+                nextButton.click();
+            } else {
+                // 对应 data-value -2, -1, 0, 1, 2 (即 1 到 5)
+                const selectedIndex = parseInt(key);
+                if (selectedIndex >= 1 && selectedIndex <= 5) {
+                    event.preventDefault(); 
+                    const targetCircle = circles[selectedIndex - 1];
+                    if (targetCircle) {
+                        circles.forEach(c => c.classList.remove('active'));
+                        targetCircle.classList.add('active');
+                        nextButton.disabled = false;
+                    }
+                }
+            }
+        }
+    });
 
-				// 存储答案：如果已存在则更新，否则添加
-				const existingIndex = userAnswers.findIndex(a => a.id === questionId);
-				if (existingIndex !== -1) {
-					userAnswers[existingIndex].value = score;
-				} else {
-					userAnswers.push({ id: questionId, value: score });
-				}
 
-				currentQuestionIndex++;
+    // 首次加载时检查状态
+    function initApp() {
+        const storedUsername = localStorage.getItem('quizUsername');
+        if (storedUsername) {
+            username = storedUsername; 
+            usernameInput.value = storedUsername;
+        }
+    }
 
-				if (currentQuestionIndex < questions.length) {
-					renderQuestion(currentQuestionIndex);
-				} else {
-					showResults(); // 问卷结束，显示结果并发送数据
-				}
-			});
+    document.addEventListener('DOMContentLoaded', initApp);
+</script>
 
-			// 键盘快捷键监听
-			document.addEventListener('keydown', function(event) {
-				if (quizView.style.display !== 'none') {
-					const key = event.key;
-
-					if (key === 'Enter') {
-						event.preventDefault(); // 阻止默认的 Enter 行为
-						nextButton.click();
-					} else {
-						const selectedIndex = parseInt(key);
-						if (selectedIndex >= 1 && selectedIndex <= 5) {
-							event.preventDefault(); // 阻止默认的数字键行为
-							const targetCircle = circles[selectedIndex - 1];
-							if (targetCircle) {
-								circles.forEach(c => c.classList.remove('active'));
-								targetCircle.classList.add('active');
-								nextButton.disabled = false;
-							}
-						}
-					}
-				}
-			});
-
-			// ----------------------------------------------------
-			// 5. 首次加载时检查状态
-			// ----------------------------------------------------
-			function initApp() {
-				const storedUsername = localStorage.getItem('quizUsername');
-				
-				// 恢复之前输入的用户名
-				if (storedUsername) {
-					username = storedUsername; 
-					usernameInput.value = storedUsername;
-				}
-				
-				// 如果您希望用户返回 test.html 时从头开始，请清除 userAnswers
-				// userAnswers = []; 
-			}
-
-			document.addEventListener('DOMContentLoaded', initApp);
-
-		</script>
 </body>
 </html>

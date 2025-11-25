@@ -1,502 +1,489 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>能力倾向测试</title>
-    
-    <style>
-        /* --- 全局和问卷基础样式 --- */
-        body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            background-color: #f4f7f6; 
-            color: #333;
-            padding: 20px;
-            /* 消除移动端点击时的瞬时高亮效果 */
-            -webkit-tap-highlight-color: transparent; 
-        }
-        
-        /* --- 视图 1: 用户名输入界面样式 --- */
-        .start-box {
-            max-width: 450px;
-            margin: 100px auto;
-            padding: 40px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        .start-box h1 {
-            color: #6C63FF;
-            font-size: 2em;
-            margin-bottom: 20px;
-        }
-        .start-box p {
-            color: #777;
-            margin-bottom: 30px;
-        }
-        .start-box input[type="text"] {
-            width: 80%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1.1em;
-            text-align: center;
-        }
-        #start-button {
-            background-color: #6C63FF;
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 25px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        #start-button:hover {
-            background-color: #574BDB;
-        }
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>能力倾向测试</title>
+		
+		<style>
+			/* --- 全局和问卷基础样式 --- */
+			body { 
+				font-family: Arial, sans-serif; 
+				text-align: center; 
+				background-color: #f4f7f6; 
+				color: #333;
+				padding: 20px;
+				/* 消除移动端点击时的瞬时高亮效果 */
+				-webkit-tap-highlight-color: transparent; 
+			}
+			
+			/* --- 用户名输入界面样式 --- */
+			.start-box {
+				max-width: 450px;
+				margin: 100px auto;
+				padding: 40px;
+				background-color: #ffffff;
+				border-radius: 12px;
+				box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+			}
+			
+			.start-box h1 {
+				color: #6C63FF;
+				font-size: 2em;
+				margin-bottom: 20px;
+			}
+			
+			.start-box p {
+				color: #777;
+				margin-bottom: 30px;
+			}
+			
+			.start-box input[type="text"] {
+				width: 80%;
+				padding: 10px;
+				margin-bottom: 20px;
+				border: 1px solid #ccc;
+				border-radius: 6px;
+				font-size: 1.1em;
+				text-align: center;
+			}
+			
+			#start-button {
+				background-color: #6C63FF;
+				color: white;
+				padding: 12px 30px;
+				border: none;
+				border-radius: 25px;
+				font-size: 1.1em;
+				cursor: pointer;
+				transition: background-color 0.3s;
+			}
+			
+			#start-button:hover {
+				background-color: #574BDB;
+			}
 
-        /* --- 视图 2: 问卷基础样式 (原 .question-box) --- */
-        .question-box {
-            max-width: 700px;
-            margin: 50px auto;
-            padding: 40px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            /* 禁止问卷框内的所有文本和元素被选中，消除光标/选区 */
-            user-select: none; 
-        }
-        h3 {
-            font-size: 1.8em;
-            margin-bottom: 40px;
-            color: #4A4A4A;
-        }
-        
-        /* --- 进度条样式 --- */
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background-color: #e0e0e0;
-            border-radius: 4px;
-            margin-bottom: 30px;
-        }
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%; 
-            background-color: #6C63FF;
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-        
-        /* --- 5. 圆圈选项样式 --- */
-        .options-container {
-            display: flex;
-            flex-direction: row; 
-            justify-content: space-between; 
-            align-items: center;
-            padding: 0 20px;
-            margin: 40px auto;
-        }
-        
-        .option-circle {
-            width: 40px; 
-            height: 40px;
-            border-radius: 50%; 
-            border: 3px solid #ccc;
-            background-color: #fff;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            user-select: none; 
-            outline: none;
-        }
+			/* --- 问卷基础样式 --- */
+			.question-box {
+				max-width: 700px;
+				margin: 50px auto;
+				padding: 40px;
+				background-color: #ffffff;
+				border-radius: 12px;
+				box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+				/* 禁止问卷框内的所有文本和元素被选中，消除光标/选区 */
+				user-select: none; 
+			}
+			
+			h3 {
+				font-size: 1.8em;
+				margin-bottom: 40px;
+				color: #4A4A4A;
+			}
+			
+			/* --- 进度条样式 --- */
+			.progress-bar {
+				width: 100%;
+				height: 8px;
+				background-color: #e0e0e0;
+				border-radius: 4px;
+				margin-bottom: 30px;
+			}
+			
+			.progress-bar-fill {
+				height: 100%;
+				width: 0%; 
+				background-color: #6C63FF;
+				border-radius: 4px;
+				transition: width 0.5s ease;
+			}
+			
+			/* --- 圆圈选项样式 --- */
+			.options-container {
+				display: flex;
+				flex-direction: row; 
+				justify-content: space-between; 
+				align-items: center;
+				padding: 0 20px;
+				margin: 40px auto;
+			}
+			
+			.option-circle {
+				width: 40px; 
+				height: 40px;
+				border-radius: 50%; 
+				border: 3px solid #ccc;
+				background-color: #fff;
+				cursor: pointer;
+				transition: all 0.3s ease;
+				user-select: none; 
+				outline: none;
+			}
 
-        /* 鼠标悬停效果 */
-        .option-circle:hover {
-            border-color: #6C63FF; 
-            transform: scale(1.1);
-        }
-        
-        /* 选中状态 (点击后) */
-        .option-circle.active {
-            border-color: #6C63FF;
-            background-color: #6C63FF;
-            box-shadow: 0 0 0 5px rgba(108, 99, 255, 0.3);
-            transform: scale(1.1);
-        }
+			/* 鼠标悬停效果 */
+			.option-circle:hover {
+				border-color: #6C63FF; 
+				transform: scale(1.1);
+			}
+			
+			/* 选中状态 (点击后) */
+			.option-circle.active {
+				border-color: #6C63FF;
+				background-color: #6C63FF;
+				box-shadow: 0 0 0 5px rgba(108, 99, 255, 0.3);
+				transform: scale(1.1);
+			}
 
-        /* 消除圆圈被按下时的闪烁 */
-        .option-circle:active {
-            transform: scale(1.05); 
-        }
-        
-        /* --- 选项文字描述定位 --- */
-        .label-positions-container {
-            display: flex;
-            justify-content: space-between; 
-            width: 100%; 
-            padding: 0 20px;
-            margin-top: 10px;
-            font-size: 0.9em;
-            color: #777;
-        }
+			/* 消除圆圈被按下时的闪烁 */
+			.option-circle:active {
+				transform: scale(1.05); 
+			}
+			
+			/* --- 选项文字描述定位 --- */
+			.label-positions-container {
+				display: flex;
+				justify-content: space-between; 
+				width: 100%; 
+				padding: 0 20px;
+				margin-top: 10px;
+				font-size: 0.9em;
+				color: #777;
+			}
 
-        .label-positions-container span {
-            text-align: center;
-            flex-basis: 33.33%; 
-        }
+			.label-positions-container span {
+				text-align: center;
+				flex-basis: 33.33%; 
+			}
 
-        .label-positions-container .label-left {
-            text-align: left;
-            transform: translateX(-13px); 
-        }
+			.label-positions-container .label-left {
+				text-align: left;
+				transform: translateX(-13px); 
+			}
 
-        .label-positions-container .label-center {
-            transform: translateX(-20px); 
-        }
+			.label-positions-container .label-center {
+				transform: translateX(-20px); 
+			}
 
-        .label-positions-container .label-right {
-            text-align: right;
-            transform: translateX(-33px); 
-        }
-        
-        /* --- 按钮样式 --- */
-        #next-button {
-            background-color: #6C63FF;
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 25px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: background-color 0.1s ease;
-            margin-top: 50px;
-        }
-        #next-button:hover {
-            background-color: #574BDB;
-        }
-        #next-button:active {
-            background-color: #574BDB; 
-            transform: translateY(1px);
-        }
-    </style>
-</head>
-<body>
+			.label-positions-container .label-right {
+				text-align: right;
+				transform: translateX(-33px); 
+			}
+			
+			/* --- 按钮样式 --- */
+			#next-button {
+				background-color: #6C63FF;
+				color: white;
+				padding: 12px 30px;
+				border: none;
+				border-radius: 25px;
+				font-size: 1.1em;
+				cursor: pointer;
+				transition: background-color 0.1s ease;
+				margin-top: 50px;
+			}
+			
+			#next-button:hover {
+				background-color: #574BDB;
+			}
+			
+			#next-button:active {
+				background-color: #574BDB; 
+				transform: translateY(1px);
+			}
+		</style>
+	</head>
+	<body>
 
-    <div id="start-view" class="start-box">
-        <h1>欢迎参加能力倾向测试</h1>
-        <p>请留下您的名称，然后点击开始。</p>
-        
-        <input type="text" id="username-input" placeholder="请输入您的名称" maxlength="15">
-        
-        <button id="start-button">开始测试</button>
-    </div>
+		<div id="start-view" class="start-box">
+			<h1>欢迎参加能力倾向测试</h1>
+			<p>请留下您的名称，然后点击开始。</p>
+			
+			<input type="text" id="username-input" placeholder="请输入您的名称" maxlength="15">
+			
+			<button id="start-button">开始测试</button>
+		</div>
 
-    <div id="quiz-view" class="question-box" style="display: none;">
-        <div id="progress-bar-container" class="progress-bar">
-            <div id="progress-fill" class="progress-bar-fill" style="width: 0%;"></div> 
-        </div>
-        
-        <p id="question-counter">第 1 题 / 共 50 题</p> 
-        
-        <h3 id="question-text">问题内容将被加载到这里。</h3> 
-        
-        <div id="options-container" class="options-container">
-            <div class="option-circle" data-value="-2" title="完全不同意"></div>
-            <div class="option-circle" data-value="-1" title="有点不同意"></div>
-            <div class="option-circle" data-value="0" title="中立"></div>
-            <div class="option-circle" data-value="1" title="有点同意"></div>
-            <div class="option-circle" data-value="2" title="完全同意"></div>
-        </div>
-        
-        <div class="label-positions-container">
-            <span class="label-left">完全不同意</span>
-            <span class="label-center">中立</span>
-            <span class="label-right">完全同意</span>
-        </div>
-        
-        <button id="next-button">下一题</button>
-    </div>
+		<div id="quiz-view" class="question-box" style="display: none;">
+			<div id="progress-bar-container" class="progress-bar">
+				<div id="progress-fill" class="progress-bar-fill" style="width: 0%;"></div> 
+			</div>
+			
+			<p id="question-counter">第 1 题 / 共 50 题</p> 
+			
+			<h3 id="question-text">问题内容将被加载到这里。</h3> 
+			
+			<div id="options-container" class="options-container">
+				<div class="option-circle" data-value="-2" title="完全不同意"></div>
+				<div class="option-circle" data-value="-1" title="有点不同意"></div>
+				<div class="option-circle" data-value="0" title="中立"></div>
+				<div class="option-circle" data-value="1" title="有点同意"></div>
+				<div class="option-circle" data-value="2" title="完全同意"></div>
+			</div>
+			
+			<div class="label-positions-container">
+				<span class="label-left">完全不同意</span>
+				<span class="label-center">中立</span>
+				<span class="label-right">完全同意</span>
+			</div>
+			
+			<button id="next-button">下一题</button>
+		</div>
 
-	<script type="module">
-    // ----------------------------------------------------
-    // 1. 模块导入
-    // ----------------------------------------------------
-    // 导入问题数据 (default export) 和 维度顺序 (named export)
-    import questions, { SCALES_ORDER } from './questions.js';
+		<script type="module">
+			
+			import questions, { SCALES_ORDER } from './questions.js';
 
-    // ----------------------------------------------------
-    // 2. 常量和 DOM 元素定义
-    // ----------------------------------------------------
-    
-    // 定义 16 个维度的初始值模板
-    const SCALES_TEMPLATE = SCALES_ORDER.reduce((acc, scale) => {
-        acc[scale] = 0;
-        return acc;
-    }, {});
-    
-    const TOTAL_PRACTICAL_QUESTIONS = 64; 
-    const MAX_RAW_SCORE_PER_QUESTION = 2; // 单个问题的最高绝对分 (来自 -2 到 2)
-    const BACKEND_SAVE_URL = '/.netlify/functions/save_data';
+			const SCALES_TEMPLATE = SCALES_ORDER.reduce((acc, scale) => {
+				acc[scale] = 0;
+				return acc;
+			}, {});
+			
+			const TOTAL_PRACTICAL_QUESTIONS = 64; 
+			const MAX_RAW_SCORE_PER_QUESTION = 2;
+			const BACKEND_SAVE_URL = '/.netlify/functions/save_data';
 
-    // --- 视图 DOM 引用 (使用您 HTML 中的实际 ID) ---
-    const startView = document.getElementById('start-view');
-    const quizView = document.getElementById('quiz-view');
-    const usernameInput = document.getElementById('username-input'); // 修正后的 ID
-    const startButton = document.getElementById('start-button');
-    const questionTextElement = document.getElementById('question-text');
-    const questionCounterElement = document.getElementById('question-counter'); // 进度条文本
-    const progressFillElement = document.getElementById('progress-fill'); // 进度条填充
-    const nextButton = document.getElementById('next-button');
-    const circles = document.querySelectorAll('.option-circle'); // 答案圆圈
+			// --- 视图 DOM 引用 (使用您 HTML 中的实际 ID) ---
+			const startView = document.getElementById('start-view');
+			const quizView = document.getElementById('quiz-view');
+			const usernameInput = document.getElementById('username-input');
+			const startButton = document.getElementById('start-button');
+			const questionTextElement = document.getElementById('question-text');
+			const questionCounterElement = document.getElementById('question-counter');
+			const progressFillElement = document.getElementById('progress-fill');
+			const nextButton = document.getElementById('next-button');
+			const circles = document.querySelectorAll('.option-circle');
 
-    // --- 问卷状态变量 ---
-    let currentQuestionIndex = 0;
-    let username = "";
-    let userAnswers = []; // 存储 { id: questionId, value: score (-2 to 2) }
-    
-    // ----------------------------------------------------
-    // 3. 核心功能函数
-    // ----------------------------------------------------
+			// --- 问卷状态变量 ---
+			let currentQuestionIndex = 0;
+			let username = "";
+			let userAnswers = [];
 
-    // A. 视图切换和初始化函数
-    function startQuiz() {
-        username = usernameInput.value.trim();
-        if (username.length < 2) {
-            alert('请输入您的名称！');
-            return;
-        }
-        localStorage.setItem('quizUsername', username);
+			// 视图切换和初始化函数
+			function startQuiz() {
+				username = usernameInput.value.trim();
+				if (username.length < 2) {
+					alert('请输入您的名称！');
+					return;
+				}
+				localStorage.setItem('quizUsername', username);
 
-        startView.style.display = 'none';
-        quizView.style.display = 'block';
+				startView.style.display = 'none';
+				quizView.style.display = 'block';
 
-        if (questions.length === 0) {
-            alert('问题数据未加载，请检查 questions.js 文件。');
-            return;
-        }
-        renderQuestion(currentQuestionIndex);
-    }
+				if (questions.length === 0) {
+					alert('问题数据未加载，请检查 questions.js 文件。');
+					return;
+				}
+				renderQuestion(currentQuestionIndex);
+			}
 
-    // B. 渲染当前问题内容和进度
-    function renderQuestion(index) {
-        if (index >= questions.length) return;
+			// 渲染当前问题内容和进度
+			function renderQuestion(index) {
+				if (index >= questions.length) return;
 
-        const question = questions[index];
-        questionTextElement.textContent = question.text;
-        questionCounterElement.textContent = `第 ${index + 1} 题 / 共 ${questions.length} 题`;
+				const question = questions[index];
+				questionTextElement.textContent = question.text;
+				questionCounterElement.textContent = `第 ${index + 1} 题 / 共 ${questions.length} 题`;
 
-        const progress = (index + 1) / questions.length * 100;
-        progressFillElement.style.width = `${progress}%`;
+				const progress = (index + 1) / questions.length * 100;
+				progressFillElement.style.width = `${progress}%`;
 
-        circles.forEach(c => c.classList.remove('active'));
-        nextButton.disabled = true;
+				circles.forEach(c => c.classList.remove('active'));
+				nextButton.disabled = true;
 
-        // 恢复答案 (如果用户返回)
-        const existingAnswer = userAnswers.find(a => a.id === question.id);
-        if (existingAnswer) {
-            const selectedCircle = document.querySelector(`.option-circle[data-value="${existingAnswer.value}"]`);
-            if (selectedCircle) {
-                selectedCircle.classList.add('active');
-                nextButton.disabled = false;
-            }
-        }
-    }
+				// 恢复答案
+				const existingAnswer = userAnswers.find(a => a.id === question.id);
+				if (existingAnswer) {
+					const selectedCircle = document.querySelector(`.option-circle[data-value="${existingAnswer.value}"]`);
+					if (selectedCircle) {
+						selectedCircle.classList.add('active');
+						nextButton.disabled = false;
+					}
+				}
+			}
 
-    // C. 计分逻辑：计算 16 个标准化分数 (0.0 - 10.0)
-    function calculateScores() {
-        let results = { ...SCALES_TEMPLATE }; 
+			// 计分逻辑：计算 16 个标准化分数 (0.0 - 10.0)
+			function calculateScores() {
+				let results = { ...SCALES_TEMPLATE }; 
 
-        // Helper 函数：计算最终分数 (处理反向计分)
-        const getFinalScore = (direction, rawScore) => {
-            if (direction === -1) {
-                return -rawScore; // 反向计分，例如：选 2 (-2) 变成 -2 (2)
-            }
-            return rawScore; 
-        };
+				// Helper 函数：计算最终分数 (处理反向计分)
+				const getFinalScore = (direction, rawScore) => {
+					if (direction === -1) {
+						return -rawScore;
+					}
+					return rawScore; 
+				};
 
-        // 1. 累加原始分数
-        userAnswers.forEach(answer => {
-            const question = questions.find(q => q.id === answer.id);
-            const score = answer.value; 
+				// 累加原始分数
+				userAnswers.forEach(answer => {
+					const question = questions.find(q => q.id === answer.id);
+					const score = answer.value; 
 
-            if (!question || question.type === 'filler') {
-                return; // 忽略填充问题
-            }
+					if (!question || question.type === 'filler') {
+						return;
+					}
 
-            // 1. 荣格八维 (功能) 计分
-            if (question.func_scale && question.func_direction !== 0) {
-                const finalScore = getFinalScore(question.func_direction, score);
-                results[question.func_scale] += finalScore;
-            }
+					// 荣格八维功能计分
+					if (question.func_scale && question.func_direction !== 0) {
+						const finalScore = getFinalScore(question.func_direction, score);
+						results[question.func_scale] += finalScore;
+					}
 
-            // 2. 人格可发展领域 (领域) 计分
-            if (question.dev_scale && question.dev_direction !== 0) {
-                const finalScore = getFinalScore(question.dev_direction, score);
-                results[question.dev_scale] += finalScore;
-            }
-        });
-        
-        // 2. 标准化分数
-        let finalNormalizedScores = {};
-        
-        SCALES_ORDER.forEach(scaleName => {
-            const rawScore = results[scaleName];
-            
-            // ⚠️ 假设每个维度平均有 8 个问题计分 (N=8)
-            // 请根据您最终的 questions.js 实际分配的问题数量来调整这个值！
-            const assumedQuestionsPerScale = 8; 
-            const maxPossibleRawScore = assumedQuestionsPerScale * MAX_RAW_SCORE_PER_QUESTION; // 16 (8 * 2)
+					// 人格可发展领域计分
+					if (question.dev_scale && question.dev_direction !== 0) {
+						const finalScore = getFinalScore(question.dev_direction, score);
+						results[question.dev_scale] += finalScore;
+					}
+				});
+				
+				// 标准化分数
+				let finalNormalizedScores = {};
+				
+				SCALES_ORDER.forEach(scaleName => {
+					const rawScore = results[scaleName];
+					
+					const assumedQuestionsPerScale = 8; 
+					const maxPossibleRawScore = assumedQuestionsPerScale * MAX_RAW_SCORE_PER_QUESTION;
 
-            // 标准化公式: 将 [-Max, Max] 范围映射到 [0.0, 10.0]
-            const numerator = rawScore + maxPossibleRawScore;
-            const denominator = 2 * maxPossibleRawScore; 
+					// 标准化公式: 将 [-Max, Max] 范围映射到 [0.0, 10.0]
+					const numerator = rawScore + maxPossibleRawScore;
+					const denominator = 2 * maxPossibleRawScore; 
 
-            const normalizedScore = (numerator / denominator) * 10;
-            finalNormalizedScores[scaleName] = parseFloat(normalizedScore.toFixed(1));
-        });
-        
-        return finalNormalizedScores; 
-    }
+					const normalizedScore = (numerator / denominator) * 10;
+					finalNormalizedScores[scaleName] = parseFloat(normalizedScore.toFixed(1));
+				});
+				
+				return finalNormalizedScores; 
+			}
 
-    // D. 发送数据到 Netlify Function
-    async function sendDataToServer(username, finalScores) {
-        const dataToSend = {
-            username: username,
-            scores: finalScores 
-        };
-        
-        try {
-            const response = await fetch(BACKEND_SAVE_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataToSend),
-            });
+			// 发送数据到 Netlify Function
+			async function sendDataToServer(username, finalScores) {
+				const dataToSend = {
+					username: username,
+					scores: finalScores 
+				};
+				
+				try {
+					const response = await fetch(BACKEND_SAVE_URL, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(dataToSend),
+					});
 
-            if (!response.ok) {
-                const errorText = await response.text(); 
-                console.error('Backend save failed:', errorText);
-                return false;
-            }
-            console.log('Results successfully saved to Google Sheets.');
-            return true;
-        } catch (error) {
-            console.error('Network or Function Error:', error);
-            return false;
-        }
-    }
+					if (!response.ok) {
+						const errorText = await response.text(); 
+						console.error('Backend save failed:', errorText);
+						return false;
+					}
+					console.log('Results successfully saved to Google Sheets.');
+					return true;
+				} catch (error) {
+					console.error('Network or Function Error:', error);
+					return false;
+				}
+			}
 
-    // E. 显示结果（并发送数据）
-    async function showResults() {
-        const finalScores = calculateScores(); 
+			// 显示结果（并发送数据）
+			async function showResults() {
+				const finalScores = calculateScores(); 
 
-        localStorage.setItem('quizResults', JSON.stringify(finalScores)); 
-        
-        nextButton.disabled = true; 
-        nextButton.textContent = '正在提交...';
+				localStorage.setItem('quizResults', JSON.stringify(finalScores)); 
+				
+				nextButton.disabled = true; 
+				nextButton.textContent = '正在提交...';
 
-        const saveSuccess = await sendDataToServer(username, finalScores);
-        
-        if (saveSuccess) {
-            window.location.href = 'results.html';
-        } else {
-            alert('数据保存失败。将跳转到结果页查看本地结果。');
-            nextButton.disabled = false;
-            nextButton.textContent = '下一题 / 查看结果';
-            setTimeout(() => {
-                window.location.href = 'results.html'; 
-            }, 500);
-        }
-    }
+				const saveSuccess = await sendDataToServer(username, finalScores);
+				
+				if (saveSuccess) {
+					window.location.href = 'results.html';
+				} else {
+					alert('数据保存失败。将跳转到结果页查看本地结果。');
+					nextButton.disabled = false;
+					nextButton.textContent = '下一题 / 查看结果';
+					setTimeout(() => {
+						window.location.href = 'results.html'; 
+					}, 500);
+				}
+			}
 
-    // ----------------------------------------------------
-    // 4. 事件监听器和初始化
-    // ----------------------------------------------------
-    
-    // startButton: 切换视图并渲染第一个问题
-    startButton.addEventListener('click', startQuiz);
-    usernameInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault(); 
-            startQuiz();
-        }
-    });
+			// 切换视图并渲染第一个问题
+			startButton.addEventListener('click', startQuiz);
+			usernameInput.addEventListener('keydown', function(event) {
+				if (event.key === 'Enter') {
+					event.preventDefault(); 
+					startQuiz();
+				}
+			});
 
+			// 答案选择
+			circles.forEach((circle) => {
+				circle.addEventListener('click', function() {
+					circles.forEach(c => c.classList.remove('active'));
+					circle.classList.add('active');
+					nextButton.disabled = false;
+				});
+			});
 
-    // 答案选择
-    circles.forEach((circle) => {
-        circle.addEventListener('click', function() {
-            circles.forEach(c => c.classList.remove('active'));
-            circle.classList.add('active');
-            nextButton.disabled = false;
-        });
-    });
+			// 保存答案并前进
+			nextButton.addEventListener('click', function() {
+				const selectedCircle = document.querySelector('.option-circle.active');
+				if (!selectedCircle) {
+					alert('请先选择一个选项！');
+					return;
+				}
 
-    // nextButton: 保存答案并前进
-    nextButton.addEventListener('click', function() {
-        const selectedCircle = document.querySelector('.option-circle.active');
-        if (!selectedCircle) {
-            alert('请先选择一个选项！');
-            return;
-        }
+				const score = parseInt(selectedCircle.getAttribute('data-value'));
+				const questionId = questions[currentQuestionIndex].id;
 
-        const score = parseInt(selectedCircle.getAttribute('data-value')); // -2 到 2
-        const questionId = questions[currentQuestionIndex].id;
+				const existingIndex = userAnswers.findIndex(a => a.id === questionId);
+				if (existingIndex !== -1) {
+					userAnswers[existingIndex].value = score;
+				} else {
+					userAnswers.push({ id: questionId, value: score });
+				}
 
-        const existingIndex = userAnswers.findIndex(a => a.id === questionId);
-        if (existingIndex !== -1) {
-            userAnswers[existingIndex].value = score;
-        } else {
-            userAnswers.push({ id: questionId, value: score });
-        }
+				currentQuestionIndex++;
 
-        currentQuestionIndex++;
+				if (currentQuestionIndex < questions.length) {
+					renderQuestion(currentQuestionIndex);
+				} else {
+					showResults(); 
+				}
+			});
 
-        if (currentQuestionIndex < questions.length) {
-            renderQuestion(currentQuestionIndex);
-        } else {
-            showResults(); 
-        }
-    });
+			// 键盘快捷键监听
+			document.addEventListener('keydown', function(event) {
+				if (quizView.style.display !== 'none') {
+					const key = event.key;
 
-    // 键盘快捷键监听
-    document.addEventListener('keydown', function(event) {
-        if (quizView.style.display !== 'none') {
-            const key = event.key;
+					if (key === 'Enter') {
+						event.preventDefault(); 
+						nextButton.click();
+					} else {
+						const selectedIndex = parseInt(key);
+						if (selectedIndex >= 1 && selectedIndex <= 5) {
+							event.preventDefault(); 
+							const targetCircle = circles[selectedIndex - 1];
+							if (targetCircle) {
+								circles.forEach(c => c.classList.remove('active'));
+								targetCircle.classList.add('active');
+								nextButton.disabled = false;
+							}
+						}
+					}
+				}
+			});
 
-            if (key === 'Enter') {
-                event.preventDefault(); 
-                nextButton.click();
-            } else {
-                // 对应 data-value -2, -1, 0, 1, 2 (即 1 到 5)
-                const selectedIndex = parseInt(key);
-                if (selectedIndex >= 1 && selectedIndex <= 5) {
-                    event.preventDefault(); 
-                    const targetCircle = circles[selectedIndex - 1];
-                    if (targetCircle) {
-                        circles.forEach(c => c.classList.remove('active'));
-                        targetCircle.classList.add('active');
-                        nextButton.disabled = false;
-                    }
-                }
-            }
-        }
-    });
+			// 首次加载时检查状态
+			function initApp() {
+				const storedUsername = localStorage.getItem('quizUsername');
+				if (storedUsername) {
+					username = storedUsername; 
+					usernameInput.value = storedUsername;
+				}
+			}
 
-
-    // 首次加载时检查状态
-    function initApp() {
-        const storedUsername = localStorage.getItem('quizUsername');
-        if (storedUsername) {
-            username = storedUsername; 
-            usernameInput.value = storedUsername;
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', initApp);
-</script>
-
-</body>
+			document.addEventListener('DOMContentLoaded', initApp);
+		</script>
+	</body>
 </html>

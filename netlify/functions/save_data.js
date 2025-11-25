@@ -1,12 +1,8 @@
-/**
- * File: netlify/functions/save_data.js
- * 目的：接收前端 16 个维度分数，并写入 Google Sheets 的单行 (A:R 列)
- */
+// 接收前端 16 个维度分数，并写入 Google Sheets 的单行 (A:R 列)
 const { google } = require('googleapis'); 
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
-// 必须与前端 questions.js 中的 SCALES_ORDER 数组保持严格一致！
 const SCALES_ORDER = [
     'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti',
     '学习动机', '学习方式', '信息处理', '思维', '情绪', '社交沟通', '自我管理', '创造'
@@ -30,7 +26,7 @@ exports.handler = async (event, context) => {
     try {
         const body = JSON.parse(event.body);
         const username = body.username || 'Anonymous';
-        const scores = body.scores; // 包含 16 个维度分数的对象
+        const scores = body.scores;
         const timestamp = new Date().toISOString();
 
         if (!scores || typeof scores !== 'object' || Object.keys(scores).length !== 16) {
@@ -39,22 +35,22 @@ exports.handler = async (event, context) => {
 
         const sheets = await getSheetClient();
         
-        // 1. 构建包含 16 个分数的数组，确保顺序与 SCALES_ORDER 严格一致
+        // 构建包含 16 个分数的数组，确保顺序与 SCALES_ORDER 严格一致
         const scoreValues = SCALES_ORDER.map(scaleName => scores[scaleName] || 0);
 
-        // 2. 构建最终的单行数据：[Timestamp (A), Username (B), 16 Scores (C:R)]
+        // 构建最终的单行数据：[Timestamp (A), Username (B), 16 Scores (C:R)]
         const dataRows = [
             [
-                timestamp, // A 列
-                username,  // B 列
-                ...scoreValues // C 到 R 列
+                timestamp,
+                username,
+                ...scoreValues
             ]
         ];
 
-        // 3. 将数据附加到 Google Sheet
+        // 将数据附加到 Google Sheet
         const result = await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
-            range: 'Sheet1!A:R', // 确保范围覆盖所有 18 列
+            range: 'Sheet1!A:R',
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: dataRows,

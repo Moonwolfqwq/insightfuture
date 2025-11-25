@@ -1,216 +1,214 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>测试结果</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    
-    <style>
-        /* --- 结果页基础样式 --- */
-        body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            background-color: #f4f7f6; 
-            color: #333;
-            padding: 20px;
-        }
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>测试结果</title>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+		
+		<style>
+			/* --- 结果页基础样式 --- */
+			body { 
+				font-family: Arial, sans-serif; 
+				text-align: center; 
+				background-color: #f4f7f6; 
+				color: #333;
+				padding: 20px;
+			}
 
-        /* 结果容器和标题样式 */
-        .results-container {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 40px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        }
+			/* 结果容器和标题样式 */
+			.results-container {
+				max-width: 800px;
+				margin: 50px auto;
+				padding: 40px;
+				background-color: #ffffff;
+				border-radius: 12px;
+				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+			}
 
-        h1 {
-            color: #6C63FF;
-            font-size: 2.2em;
-            margin-bottom: 10px;
-        }
+			h1 {
+				color: #6C63FF;
+				font-size: 2.2em;
+				margin-bottom: 10px;
+			}
 
-        p.username-display {
-            font-size: 1.2em;
-            color: #555;
-            margin-bottom: 40px;
-        }
+			p.username-display {
+				font-size: 1.2em;
+				color: #555;
+				margin-bottom: 40px;
+			}
 
-        /* --- 雷达图容器样式 --- */
-        .chart-box {
-            width: 100%;
-            height: auto;
-            margin: 40px auto;
-        }
-        
-        #radarChart {
-            max-width: 600px;
-            margin: 0 auto;
-        }
+			/* --- 雷达图容器样式 --- */
+			.chart-box {
+				width: 100%;
+				height: auto;
+				margin: 40px auto;
+			}
+			
+			#radarChart {
+				max-width: 600px;
+				margin: 0 auto;
+			}
 
-        /* --- 维度分数列表样式 --- */
-        .score-summary {
-            text-align: left;
-            margin-top: 30px;
-            padding: 0 20px;
-        }
+			/* --- 维度分数列表样式 --- */
+			.score-summary {
+				text-align: left;
+				margin-top: 30px;
+				padding: 0 20px;
+			}
 
-        .score-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px dashed #eee;
-        }
+			.score-item {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 10px 0;
+				border-bottom: 1px dashed #eee;
+			}
 
-        .score-item:last-child {
-            border-bottom: none;
-        }
+			.score-item:last-child {
+				border-bottom: none;
+			}
 
-        .dimension-name {
-            font-weight: bold;
-            color: #4A4A4A;
-        }
+			.dimension-name {
+				font-weight: bold;
+				color: #4A4A4A;
+			}
 
-        .dimension-score {
-            background-color: #e6e6ff;
-            color: #6C63FF;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        
-        /* --- 返回按钮样式 --- */
-        .restart-button {
-            display: inline-block;
-            background-color: #6C63FF;
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 25px;
-            font-size: 1.1em;
-            cursor: pointer;
-            text-decoration: none;
-            margin-top: 40px;
-            transition: background-color 0.3s;
-        }
-        .restart-button:hover {
-            background-color: #574BDB;
-        }
+			.dimension-score {
+				background-color: #e6e6ff;
+				color: #6C63FF;
+				padding: 5px 10px;
+				border-radius: 4px;
+				font-weight: bold;
+			}
+			
+			/* --- 返回按钮样式 --- */
+			.restart-button {
+				display: inline-block;
+				background-color: #6C63FF;
+				color: white;
+				padding: 12px 30px;
+				border: none;
+				border-radius: 25px;
+				font-size: 1.1em;
+				cursor: pointer;
+				text-decoration: none;
+				margin-top: 40px;
+				transition: background-color 0.3s;
+			}
+			
+			.restart-button:hover {
+				background-color: #574BDB;
+			}
+		</style>
+	</head>
+	<body>
 
-    </style>
-</head>
-<body>
+		<div class="results-container">
+			<h1>您的能力倾向测试结果</h1>
+			<p class="username-display" id="user-greeting">正在加载...</p>
 
-    <div class="results-container">
-        <h1>您的能力倾向测试结果</h1>
-        <p class="username-display" id="user-greeting">正在加载...</p>
+			<div class="chart-box">
+				<canvas id="radarChart"></canvas>
+			</div>
 
-        <div class="chart-box">
-            <canvas id="radarChart"></canvas>
-        </div>
+			<h2>维度分数总结</h2>
+			<div id="score-summary-list" class="score-summary"></div>
 
-        <h2>维度分数总结 (满分 10 分)</h2>
-        <div id="score-summary-list" class="score-summary">
-            </div>
+			<a href="test.html" class="restart-button">重新测试</a>
+		</div>
 
-        <a href="test.html" class="restart-button">重新测试</a>
-    </div>
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				// --- 初始化：从本地存储获取用户名和结果数据 ---
+				const username = localStorage.getItem('quizUsername') || '匿名用户';
+				const resultsString = localStorage.getItem('currentQuizNormalizedResults');
+				const userGreeting = document.getElementById('user-greeting');
+				const scoreSummaryList = document.getElementById('score-summary-list');
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // --- 初始化：从本地存储获取用户名和结果数据 ---
-            const username = localStorage.getItem('quizUsername') || '匿名用户';
-            const resultsString = localStorage.getItem('currentQuizNormalizedResults');
-            const userGreeting = document.getElementById('user-greeting');
-            const scoreSummaryList = document.getElementById('score-summary-list');
+				userGreeting.textContent = `${username}，这是您在各个能力倾向维度上的表现：`;
 
-            userGreeting.textContent = `${username}，这是您在各个能力倾向维度上的表现：`;
+				if (!resultsString) {
+					userGreeting.textContent = '无法找到您的测试结果，请先完成测试。';
+					// 清除图表容器，防止加载失败
+					document.getElementById('radarChart').style.display = 'none';
+					return;
+				}
 
-            if (!resultsString) {
-                userGreeting.textContent = '无法找到您的测试结果，请先完成测试。';
-                // 清除图表容器，防止加载失败
-                document.getElementById('radarChart').style.display = 'none';
-                return;
-            }
+				const results = JSON.parse(resultsString);
+				const labels = Object.keys(results);
+				const dataScores = Object.values(results);
+				
+				// --- 渲染详细分数列表 ---
+				labels.forEach((label, index) => {
+					const score = dataScores[index];
+					const item = document.createElement('div');
+					item.className = 'score-item';
+					item.innerHTML = `
+						<span class="dimension-name">${label}</span>
+						<span class="dimension-score">${score} / 10.0</span>
+					`;
+					scoreSummaryList.appendChild(item);
+				});
 
-            const results = JSON.parse(resultsString);
-            const labels = Object.keys(results);
-            const dataScores = Object.values(results);
-            
-            // --- 渲染详细分数列表 ---
-            labels.forEach((label, index) => {
-                const score = dataScores[index];
-                const item = document.createElement('div');
-                item.className = 'score-item';
-                item.innerHTML = `
-                    <span class="dimension-name">${label}</span>
-                    <span class="dimension-score">${score} / 10.0</span>
-                `;
-                scoreSummaryList.appendChild(item);
-            });
-
-
-            // --- 绘制雷达图 (Chart.js 配置) ---
-            const ctx = document.getElementById('radarChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '得分',
-                        data: dataScores,
-                        backgroundColor: 'rgba(108, 99, 255, 0.2)', // 填充色
-                        borderColor: '#6C63FF', // 边框色
-                        pointBackgroundColor: '#6C63FF',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: '#6C63FF',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        r: {
-                            angleLines: {
-                                display: true,
-                                color: '#ccc'
-                            },
-                            grid: {
-                                color: 'rgba(200, 200, 200, 0.5)'
-                            },
-                            suggestedMin: 0,
-                            suggestedMax: 10,
-                            pointLabels: {
-                                font: {
-                                    size: 14
-                                }
-                            },
-                            ticks: {
-                                stepSize: 2,
-                                backdropColor: 'transparent',
-                                color: '#555'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false // 不显示图例
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.dataset.label}: ${context.parsed.r} / 10.0`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        });
-    </script>
-</body>
+				// --- 绘制雷达图 ---
+				const ctx = document.getElementById('radarChart').getContext('2d');
+				new Chart(ctx, {
+					type: 'radar',
+					data: {
+						labels: labels,
+						datasets: [{
+							label: '得分',
+							data: dataScores,
+							backgroundColor: 'rgba(108, 99, 255, 0.2)',
+							borderColor: '#6C63FF',
+							pointBackgroundColor: '#6C63FF',
+							pointBorderColor: '#fff',
+							pointHoverBackgroundColor: '#fff',
+							pointHoverBorderColor: '#6C63FF',
+							borderWidth: 2
+						}]
+					},
+					options: {
+						responsive: true,
+						scales: {
+							r: {
+								angleLines: {
+									display: true,
+									color: '#ccc'
+								},
+								grid: {
+									color: 'rgba(200, 200, 200, 0.5)'
+								},
+								suggestedMin: 0,
+								suggestedMax: 10,
+								pointLabels: {
+									font: {
+										size: 14
+									}
+								},
+								ticks: {
+									stepSize: 2,
+									backdropColor: 'transparent',
+									color: '#555'
+								}
+							}
+						},
+						plugins: {
+							legend: {
+								display: false
+							},
+							tooltip: {
+								callbacks: {
+									label: function(context) {
+										return ` ${context.dataset.label}: ${context.parsed.r} / 10.0`;
+									}
+								}
+							}
+						}
+					}
+				});
+			});
+		</script>
+	</body>
 </html>

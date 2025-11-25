@@ -112,7 +112,7 @@
 				<canvas id="radarChart"></canvas>
 			</div>
 
-			<h2>维度分数总结</h2>
+			<h2>人格可发展领域总结</h2>
 			<div id="score-summary-list" class="score-summary"></div>
 
 			<a href="test.html" class="restart-button">重新测试</a>
@@ -120,13 +120,27 @@
 
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
+				
+				// 定义在结果页展示的 8 个人格可发展领域
+				const DOMAIN_LABELS_TO_SHOW = [
+					'学习动机', 
+					'学习方式', 
+					'信息处理', 
+					'思维', 
+					'情绪', 
+					'社交沟通', 
+					'自我管理', 
+					'创造'
+				];
+
 				// --- 初始化：从本地存储获取用户名和结果数据 ---
 				const username = localStorage.getItem('quizUsername') || '匿名用户';
-				const resultsString = localStorage.getItem('currentQuizNormalizedResults');
+				// 关键：从 test.html 的最新脚本中获取包含所有 16 个分数的对象
+				const resultsString = localStorage.getItem('quizResults'); 
 				const userGreeting = document.getElementById('user-greeting');
 				const scoreSummaryList = document.getElementById('score-summary-list');
 
-				userGreeting.textContent = `${username}，这是您在各个能力倾向维度上的表现：`;
+				userGreeting.textContent = `${username}，这是您在各个能力倾向领域上的表现：`;
 
 				if (!resultsString) {
 					userGreeting.textContent = '无法找到您的测试结果，请先完成测试。';
@@ -135,10 +149,20 @@
 					return;
 				}
 
-				const results = JSON.parse(resultsString);
-				const labels = Object.keys(results);
-				const dataScores = Object.values(results);
+				const allResults = JSON.parse(resultsString);
 				
+				// --- 筛选数据：只保留 8 个人格可发展领域 ---
+				const labels = [];
+				const dataScores = [];
+				
+				DOMAIN_LABELS_TO_SHOW.forEach(domain => {
+					// 仅添加在目标列表中且在结果对象中存在的分数
+					if (allResults.hasOwnProperty(domain)) {
+						labels.push(domain);
+						dataScores.push(allResults[domain]);
+					}
+				});
+
 				// --- 渲染详细分数列表 ---
 				labels.forEach((label, index) => {
 					const score = dataScores[index];
@@ -180,6 +204,7 @@
 								grid: {
 									color: 'rgba(200, 200, 200, 0.5)'
 								},
+								// 确保轴范围正确
 								suggestedMin: 0,
 								suggestedMax: 10,
 								pointLabels: {

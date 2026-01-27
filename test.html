@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>能力倾向测试</title>
     <style>
-        /* 全局：禁止默认高亮，提升反馈即时性 */
         * { user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, sans-serif; text-align: center; background-color: #f4f7f6; color: #333; padding: 15px; touch-action: manipulation; }
         
@@ -20,41 +19,31 @@
         #question-prefix { font-size: 14px; color: #999; font-weight: bold; min-height: 20px; margin-bottom: 10px; }
         h2#question-text { color: #000; font-size: 1.6em; margin: 20px 0 40px 0; line-height: 1.5; font-weight: 600; }
 
-        /* 平面选项样式 */
         .options-container { display: flex; justify-content: space-between; margin: 40px 0; }
         .circle-wrapper { cursor: pointer; flex: 1; display: flex; flex-direction: column; align-items: center; }
         .circle { 
             width: 38px; height: 38px; border: 2px solid #469aa7; border-radius: 50%; 
             margin-bottom: 10px; transition: all 0.1s ease; background: white; 
         }
-        /* 按下反馈：平面缩小 */
         .circle-pressing { transform: scale(0.8); background: rgba(70, 154, 167, 0.15) !important; }
         .circle.active { background: #469aa7 !important; transform: scale(1.05); }
 
-        /* 平面按钮样式 (去掉立体阴影) */
         .btn { 
             background: #469aa7; color: white; border: none; padding: 14px 45px; 
             border-radius: 35px; cursor: pointer; font-size: 18px; font-weight: bold;
             transition: all 0.1s ease; 
         }
-        /* 按下反馈：平面位移下沉感 */
-        .btn-pressing { 
-            transform: translateY(2px) scale(0.97); 
-            background: #367d88 !important;
-            opacity: 0.9;
-        }
+        .btn-pressing { transform: translateY(2px) scale(0.97); background: #367d88 !important; opacity: 0.9; }
         .btn:disabled { background: #ccc; transform: none !important; cursor: not-allowed; opacity: 1; }
-        
         .btn-secondary { background: #e8e8ed; color: #555; margin-right: 15px; }
-        .btn-secondary.btn-pressing { background: #dcdce0 !important; }
 
         #quiz-view { display: none; }
     </style>
 </head>
 <body>
     <div id="start-view" class="quiz-container">
-        <h1 style="color:#469aa7; margin-bottom:30px;">欢迎参加测试</h1>
-        <input type="text" id="username-input" style="user-select:text; -webkit-user-select:text; width:80%; padding:15px; margin-bottom:30px; border:2px solid #eee; border-radius:12px; font-size:16px; outline:none;" placeholder="请输入您的姓名" spellcheck="false">
+        <h1 style="color:#469aa7; margin-bottom:30px;">能力倾向测试</h1>
+        <input type="text" id="username-input" style="user-select:text; -webkit-user-select:text; width:80%; padding:15px; margin-bottom:30px; border:2px solid #eee; border-radius:12px; outline:none;" placeholder="您的姓名">
         <br><button id="start-btn" class="btn">进入测试</button>
     </div>
 
@@ -84,15 +73,11 @@
 
         function triggerHaptic() { if (navigator.vibrate) navigator.vibrate(12); }
 
-        // 绑定触屏/点击反馈
         function attachFeedback(el, activeClass) {
             const press = () => { if(!el.disabled) el.classList.add(activeClass); };
             const release = () => el.classList.remove(activeClass);
-            el.addEventListener('touchstart', press);
-            el.addEventListener('touchend', release);
-            el.addEventListener('mousedown', press);
-            el.addEventListener('mouseup', release);
-            el.addEventListener('mouseleave', release);
+            el.addEventListener('touchstart', press); el.addEventListener('touchend', release);
+            el.addEventListener('mousedown', press); el.addEventListener('mouseup', release);
         }
 
         const startBtn = document.getElementById('start-btn');
@@ -102,12 +87,8 @@
         attachFeedback(startBtn, 'btn-pressing');
         attachFeedback(nextBtn, 'btn-pressing');
         attachFeedback(backBtn, 'btn-pressing');
-        document.querySelectorAll('.circle-wrapper').forEach(cw => {
-            attachFeedback(cw.querySelector('.circle'), 'circle-pressing');
-        });
 
         startBtn.addEventListener('click', () => {
-            triggerHaptic();
             const name = document.getElementById('username-input').value.trim();
             if (!name) return alert("请输入姓名");
             localStorage.setItem('quizUsername', name);
@@ -147,32 +128,40 @@
             nextBtn.dataset.value = val;
         }
 
-        document.querySelectorAll('.circle-wrapper').forEach(cw => cw.addEventListener('click', () => selectOption(cw.dataset.val)));
+        document.querySelectorAll('.circle-wrapper').forEach(cw => {
+            cw.addEventListener('click', () => selectOption(cw.dataset.val));
+            attachFeedback(cw.querySelector('.circle'), 'circle-pressing');
+        });
+
+        async function uploadResults() {
+            nextBtn.disabled = true; nextBtn.innerText = "上传中...";
+            const username = localStorage.getItem('quizUsername');
+            const scales = ['Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation', 'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
+            let scores = {}; scales.forEach(s => scores[s] = 0);
+            userAnswers.forEach(ans => {
+                const q = questions.find(item => item.id === parseInt(ans.id));
+                if (q) scores[q.scale] += parseInt(ans.value);
+            });
+            try {
+                await fetch('/.netlify/functions/save_data', { method: 'POST', body: JSON.stringify({ username, scores }) });
+                window.location.href = 'results.html';
+            } catch (err) { alert("保存失败"); nextBtn.disabled = false; }
+        }
 
         function handleNext() {
             if (nextBtn.disabled) return;
-            triggerHaptic();
             userAnswers[currentIdx] = { id: questions[currentIdx].id, value: nextBtn.dataset.value };
             if (currentIdx < questions.length - 1) { currentIdx++; renderQuestion(); }
-            else { localStorage.setItem('userAnswers', JSON.stringify(userAnswers)); window.location.href = 'results.html'; }
-        }
-
-        function handleBack() {
-            if (currentIdx > 0) { triggerHaptic(); currentIdx--; renderQuestion(); }
+            else { uploadResults(); }
         }
 
         nextBtn.addEventListener('click', handleNext);
-        backBtn.addEventListener('click', handleBack);
+        backBtn.addEventListener('click', () => { if (currentIdx > 0) { currentIdx--; renderQuestion(); } });
 
-        // --- 隐藏的快捷键支持 ---
         document.addEventListener('keydown', (e) => {
-            if (document.getElementById('quiz-view').style.display !== 'block') return;
-            // 1-5 数字键选择
             if (e.key >= '1' && e.key <= '5') selectOption(e.key);
-            // Enter 下一题
             if (e.key === 'Enter') handleNext();
-            // Shift 上一题
-            if (e.key === 'Shift') handleBack();
+            if (e.key === 'Shift') { if (currentIdx > 0) { currentIdx--; renderQuestion(); } }
         });
     </script>
 </body>

@@ -49,78 +49,103 @@
     </div>
 
     <script type="module">
-        import { getQuestions } from './questions.js';
+		import { getQuestions } from './questions.js';
 
-        let questions = [];
-        let currentIdx = 0;
-        let userAnswers = [];
+		let questions = [];
+		let currentIdx = 0;
+		let userAnswers = [];
 
-        const startView = document.getElementById('start-view');
-        const quizView = document.getElementById('quiz-view');
-        const usernameInput = document.getElementById('username-input');
-        const startBtn = document.getElementById('start-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const qText = document.getElementById('question-text');
-        const qPrefix = document.getElementById('question-prefix');
-        const circles = document.querySelectorAll('.circle-wrapper');
+		const startView = document.getElementById('start-view');
+		const quizView = document.getElementById('quiz-view');
+		const usernameInput = document.getElementById('username-input');
+		const startBtn = document.getElementById('start-btn');
+		const nextBtn = document.getElementById('next-btn');
+		const qText = document.getElementById('question-text');
+		const qPrefix = document.getElementById('question-prefix');
+		const circles = document.querySelectorAll('.circle-wrapper');
 
-        // 点击开始按钮
-        startBtn.addEventListener('click', () => {
-            const name = usernameInput.value.trim();
-            if (!name) return alert("请输入姓名");
-            localStorage.setItem('quizUsername', name);
-            
-            // 切换视图
-            startView.style.display = 'none';
-            quizView.style.display = 'block';
-            
-            // 初始化题目
-            questions = getQuestions();
-            renderQuestion();
-        });
+		// 1. 点击开始按钮逻辑
+		startBtn.addEventListener('click', () => {
+			const name = usernameInput.value.trim();
+			if (!name) return alert("请输入姓名");
+			localStorage.setItem('quizUsername', name);
+			
+			startView.style.display = 'none';
+			quizView.style.display = 'block';
+			
+			questions = getQuestions();
+			renderQuestion();
+		});
 
-        // 渲染题目
-        function renderQuestion() {
-            const q = questions[currentIdx];
-            
-            // 处理引导语逻辑
-            if (q.part === 'LLOS') {
-                qPrefix.style.display = "block";
-                qPrefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
-            } else {
-                qPrefix.style.display = "none";
-            }
-            
-            qText.innerText = q.text;
-            document.getElementById('progress').style.width = ((currentIdx / questions.length) * 100) + '%';
-            
-            // 重置选项
-            circles.forEach(cw => cw.querySelector('.circle').classList.remove('active'));
-            nextBtn.disabled = true;
-        }
+		// 2. 渲染题目函数
+		function renderQuestion() {
+			const q = questions[currentIdx];
+			
+			if (q.part === 'LLOS') {
+				qPrefix.style.display = "block";
+				qPrefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
+			} else {
+				qPrefix.style.display = "none";
+			}
+			
+			qText.innerText = q.text;
+			document.getElementById('progress').style.width = ((currentIdx / questions.length) * 100) + '%';
+			
+			// 重置状态
+			circles.forEach(cw => cw.querySelector('.circle').classList.remove('active'));
+			nextBtn.disabled = true;
+			nextBtn.dataset.value = ""; 
+		}
 
-        // 选择选项
-        circles.forEach(cw => {
-            cw.addEventListener('click', () => {
-                circles.forEach(c => c.querySelector('.circle').classList.remove('active'));
-                cw.querySelector('.circle').classList.add('active');
-                nextBtn.disabled = false;
-                nextBtn.dataset.value = cw.dataset.val;
-            });
-        });
+		// 3. 鼠标/点击选择逻辑
+		circles.forEach(cw => {
+			cw.addEventListener('click', () => {
+				selectOption(cw.dataset.val);
+			});
+		});
 
-        // 下一题
-        nextBtn.addEventListener('click', () => {
-            userAnswers.push({ id: questions[currentIdx].id, value: nextBtn.dataset.value });
-            currentIdx++;
+		function selectOption(val) {
+			circles.forEach(c => {
+				const circle = c.querySelector('.circle');
+				circle.classList.remove('active');
+				if (c.dataset.val == val) circle.classList.add('active');
+			});
+			nextBtn.disabled = false;
+			nextBtn.dataset.value = val;
+		}
 
-            if (currentIdx < questions.length) {
-                renderQuestion();
-            } else {
-                localStorage.setItem('userAnswers', JSON.stringify(userAnswers));
-                window.location.href = 'results.html';
-            }
-        });
-    </script>
+		// 4. 下一题逻辑
+		function handleNext() {
+			if (nextBtn.disabled) return;
+			
+			userAnswers.push({ id: questions[currentIdx].id, value: nextBtn.dataset.value });
+			currentIdx++;
+
+			if (currentIdx < questions.length) {
+				renderQuestion();
+			} else {
+				localStorage.setItem('userAnswers', JSON.stringify(userAnswers));
+				window.location.href = 'results.html';
+			}
+		}
+
+		nextBtn.addEventListener('click', handleNext);
+
+		// 5. 【新增】键盘快捷键监听
+		document.addEventListener('keydown', (e) => {
+			// 如果题目界面没显示，则不触发
+			if (quizView.style.display !== 'block') return;
+
+			// 数字键 1-5 选择
+			if (e.key >= '1' && e.key <= '5') {
+				selectOption(e.key);
+			}
+
+			// Enter 键下一题
+			if (e.key === 'Enter') {
+				handleNext();
+			}
+		});
+	</script>
 </body>
 </html>

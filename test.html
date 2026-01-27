@@ -247,29 +247,37 @@
 				const prefixElement = document.getElementById('question-prefix');
 				const textElement = document.getElementById('question-text');
 
-				// --- 逻辑修改：处理两种不同的 LLOS 引导语 ---
-				const question = questions[index];
-				const prefixElement = document.getElementById('question-prefix');
-				const textElement = document.getElementById('question-text');
-
-				// 处理无动机前缀
-				if (question.scale === 'Amotivation') {
-					prefixElement.innerText = "关于学习英语，我认为：";
+				// 逻辑：处理引导语
+				if (q.part === 'LLOS') {
+					prefixElement.style.display = "block";
+					if (q.scale === 'Amotivation') {
+						prefixElement.innerText = "关于学习英语，我认为：";
+					} else {
+						prefixElement.innerText = "我学习英语的原因是：";
+					}
 				} else {
-					prefixElement.innerText = ""; // 其他题目清空前缀
+					prefixElement.style.display = "none";
 				}
-				
-				textElement.innerText = question.text;
 
 				textElement.innerText = q.text;
 
-				// 重置 5-Likert 选项状态
-				const circles = document.querySelectorAll('.circle');
+				// 重置选项状态
 				circles.forEach(c => c.classList.remove('active'));
-				document.getElementById('next-btn').disabled = true;
-				
+				nextButton.disabled = true;
+
 				// 更新进度
-				updateProgress(index + 1, questions.length);
+				const progress = ((index + 1) / questions.length) * 100;
+				document.getElementById('progress').style.width = progress + '%';
+				
+				// 如果该题已做过，恢复状态
+				const existing = userAnswers.find(a => a.id === q.id);
+				if (existing) {
+					const target = circles[existing.value - 1];
+					if (target) {
+						target.classList.add('active');
+						nextButton.disabled = false;
+					}
+				}
 			}
 
 			// 监听选项点击 (5-Likert)

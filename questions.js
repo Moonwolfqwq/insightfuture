@@ -8,6 +8,12 @@ function shuffle(array) {
     return newArray;
 }
 
+// 严格定义 14 个维度的顺序
+export const SCALES_ORDER = [
+    'Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation', 
+    'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'
+];
+
 const llosQuestions = [
     { id: 1, part: 'LLOS', scale: 'Intrinsic', text: '因为我喜欢使用英语。' },
     { id: 2, part: 'LLOS', scale: 'Intrinsic', text: '因为在学习英语时第一次意识到新事物会让我感到快乐。' },
@@ -46,29 +52,29 @@ const llosQuestions = [
 const jungQuestions = [
     { id: 33, part: 'Jung', scale: 'Ne', text: '我享受自由的联想并与他人分享灵感。' },
     { id: 34, part: 'Jung', scale: 'Ne', text: '新概念总能唤起我旺盛的好奇心和探索欲。' },
-    { id: 35, part: 'Jung', scale: 'Ne', text: '我的思维比较发散，常常会脱离当前的情景，转移到其他的地方。' },
-    { id: 36, part: 'Jung', scale: 'Ne', text: '我常常不由自主的感受到事物之间普遍的、天然的联系。' },
-    { id: 37, part: 'Jung', scale: 'Ni', text: '我常常通过直觉形成对事物气场的整体印象，并对其铭记于心。' },
-    { id: 38, part: 'Jung', scale: 'Ni', text: '我经常发现自己有一些难以确切描述的模糊想法，并能够在有需要的时候回想起来。' },
-    { id: 39, part: 'Jung', scale: 'Ni', text: '我擅长运用直觉，透过现象洞察到事物的本质。' },
-    { id: 40, part: 'Jung', scale: 'Ni', text: '即使缺乏充足的信息或证据，我也经常能突然悟出事件的关键之处。' },
-    { id: 41, part: 'Jung', scale: 'Se', text: '我喜欢亲身体验或亲自动手操作，并从中获得乐趣。' },
-    { id: 42, part: 'Jung', scale: 'Se', text: '我喜欢追求直接的感官刺激和体验，包括视听体验、品味美食、体育运动等。' },
-    { id: 43, part: 'Jung', scale: 'Se', text: '我是个活在当下的人，当前实实在在的体验对我最重要。' },
-    { id: 44, part: 'Jung', scale: 'Se', text: '我乐于捕捉事物中局部的、细节的亮点。' },
-    { id: 45, part: 'Jung', scale: 'Si', text: '我享受安稳的生活节奏和熟悉的日程安排。' },
-    { id: 46, part: 'Jung', scale: 'Si', text: '我习惯用重复训练的方式来学习新事物。' },
-    { id: 47, part: 'Jung', scale: 'Si', text: '我关注熟悉事物的细节变化，有不一样的地方就会感到一些本能反应。' },
-    { id: 48, part: 'Jung', scale: 'Si', text: '我习惯以较为保守的视角看待事物，通常更愿意相信经过时间检验的观念。' },
-    { id: 49, part: 'Jung', scale: 'Fe', text: '我喜欢主动地向他人传递友好和善意，并且希望其他人也能这样对待自己。' },
-    { id: 50, part: 'Jung', scale: 'Fe', text: '我做事时会优先考虑他人的感受和需求。' },
-    { id: 51, part: 'Jung', scale: 'Fe', text: '我喜欢接触他人、理解他人。' },
-    { id: 52, part: 'Jung', scale: 'Fe', text: '我常常能对他人的喜怒哀乐感同身受。' },
-    { id: 53, part: 'Jung', scale: 'Fi', text: '我常常回顾自己的内心感受，发掘自己的内心世界。' },
-    { id: 54, part: 'Jung', scale: 'Fi', text: '我执着于内心的喜好和需求，并为此付出很多时间和精力。' },
-    { id: 55, part: 'Jung', scale: 'Fi', text: '我常常感到自己内心波澜起伏、百感交集。' },
-    { id: 56, part: 'Jung', scale: 'Fi', text: '我的价值判断遵循一套完全源于自己的标准，并反感别人的干涉。' },
-    { id: 57, part: 'Jung', scale: 'Te', text: '我认为生活中的事情应当有客观的标准（例如能力分数，时间消耗等）。' },
+    { id: 35, part: 'Jung', scale: 'Ne', text: '我的思维比较发散，常能看到事物之间不明显的联系。' },
+    { id: 36, part: 'Jung', scale: 'Ne', text: '我喜欢尝试各种可能性，而不是固守一种方案。' },
+    { id: 37, part: 'Jung', scale: 'Ni', text: '我常能敏锐地捕捉到事物的发展趋势或核心本质。' },
+    { id: 38, part: 'Jung', scale: 'Ni', text: '我习惯于构建深刻的洞察力或愿景。' },
+    { id: 39, part: 'Jung', scale: 'Ni', text: '我倾向于从宏观或长远的角度思考问题。' },
+    { id: 40, part: 'Jung', scale: 'Ni', text: '我常有“灵光一现”的直觉，能瞬间理解复杂的局面。' },
+    { id: 41, part: 'Jung', scale: 'Se', text: '我喜欢沉浸在当下的感官体验中（如美食、美景）。' },
+    { id: 42, part: 'Jung', scale: 'Se', text: '我能迅速注意到环境中的细微变化。' },
+    { id: 43, part: 'Jung', scale: 'Se', text: '我倾向于通过实际行动来应对眼前的挑战。' },
+    { id: 44, part: 'Jung', scale: 'Se', text: '我追求身体的活力和对物理世界的掌控感。' },
+    { id: 45, part: 'Jung', scale: 'Si', text: '我非常重视过去的经验和已经证实的传统。' },
+    { id: 46, part: 'Jung', scale: 'Si', text: '我倾向于详细记录并回忆重要的细节和事实。' },
+    { id: 47, part: 'Jung', scale: 'Si', text: '我喜欢稳定、可预测的环境和习惯。' },
+    { id: 48, part: 'Jung', scale: 'Si', text: '我做决定时常会参考以前类似的成功案例。' },
+    { id: 49, part: 'Jung', scale: 'Fe', text: '我非常关注周围人的情绪感受和群体和谐。' },
+    { id: 50, part: 'Jung', scale: 'Fe', text: '我倾向于根据社会价值和道德规范来行事。' },
+    { id: 51, part: 'Jung', scale: 'Fe', text: '我擅长协调人际关系并寻求共识。' },
+    { id: 52, part: 'Jung', scale: 'Fe', text: '他人的赞赏和认可对我来说非常重要。' },
+    { id: 53, part: 'Jung', scale: 'Fi', text: '我非常看重个人的内心价值观和真实性。' },
+    { id: 54, part: 'Jung', scale: 'Fi', text: '我对他人的感受有很强的同理心，即便不表达出来。' },
+    { id: 55, part: 'Jung', scale: 'Fi', text: '我倾向于根据自己内心的信念来判断对错。' },
+    { id: 56, part: 'Jung', scale: 'Fi', text: '我的价值判断遵循一套源于自己的标准，反感别人干涉。' },
+    { id: 57, part: 'Jung', scale: 'Te', text: '我认为生活中的事情应当有客观的标准（如能力分数）。' },
     { id: 58, part: 'Jung', scale: 'Te', text: '我乐于评判事物的实用价值。' },
     { id: 59, part: 'Jung', scale: 'Te', text: '我常以效率为标准律己待人。' },
     { id: 60, part: 'Jung', scale: 'Te', text: '我做事总会把目标放在第一位。' },
@@ -87,15 +93,6 @@ const fillerQuestions = [
     { id: 70, part: 'Filler', scale: null, text: '我通常会提前规划第二天要做的事情。' }
 ];
 
-export const getQuestions = () => {
-    // 前半段：LLOS 内部打乱
-    const part1 = shuffle(llosQuestions);
-    // 后半段：荣格内部打乱
-    const part2 = shuffle(jungQuestions);
-    return [...part1, ...part2];
-};
-
-export const SCALES_ORDER = [
-    'Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation',
-    'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'
-];
+export function getQuestions() {
+    return shuffle([...llosQuestions, ...jungQuestions, ...fillerQuestions]);
+}

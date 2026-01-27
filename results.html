@@ -122,89 +122,61 @@
 			import { getQuestions, SCALES_ORDER } from './questions.js';
 
 			window.onload = function() {
-				// 从 localStorage 读取测试数据
-				const username = localStorage.getItem('survey_username') || '匿名用户';
-				const userAnswers = JSON.parse(localStorage.getItem('survey_answers') || '[]');
-				const questions = getQuestions(); // 获取包含 part 信息的完整题目列表
+				const username = localStorage.getItem('quizUsername') || '匿名用户';
+				const userAnswers = JSON.parse(localStorage.getItem('userAnswers') || '[]');
+				const questions = getQuestions();
 
 				if (userAnswers.length === 0) {
-					alert('未找到测试记录，请重新测试。');
+					alert('未找到测试记录！');
 					window.location.href = 'test.html';
 					return;
 				}
 
 				document.getElementById('display-username').innerText = username;
 
-					// --- 修改 results.html 中的计分逻辑 ---
-					function calculateResults(answers, allQuestions) {
-						const rawScores = {};
-						const counts = {};
-						
-						// 14个维度定义
-						const llosScales = ['Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation'];
-						const jungScales = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
-						const allScales = [...llosScales, ...jungScales];
+				// 计分函数：LLOS 5分制 / Jung 30分制
+				function calculateResults(answers, allQuestions) {
+					const rawScores = {};
+					const counts = {};
+					const jungScales = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
+					const llosScales = ['Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation'];
 
-						allScales.forEach(s => { rawScores[s] = 0; counts[s] = 0; });
+					SCALES_ORDER.forEach(s => { rawScores[s] = 0; counts[s] = 0; });
 
-						// 累加原始分
-						answers.forEach(ans => {
-							const q = allQuestions.find(item => item.id === ans.id);
-							if (q && q.scale && rawScores.hasOwnProperty(q.scale)) {
-								rawScores[q.scale] += parseInt(ans.value);
-								counts[q.scale] += 1;
-							}
-						});
-
-						const finalScores = {};
-
-						// 语言动机：保留 1-5 平均分（展现细微动机差异）
-						llosScales.forEach(s => {
-							finalScores[s] = counts[s] > 0 ? (rawScores[s] / counts[s]).toFixed(2) : "0.00";
-						});
-
-						// 荣格功能：实现每项 30 分制（总分 240）
-						// 逻辑：4道题原始最高20分，乘以 1.5 映射到 30 分，从而拉开高分差距，体现相对强弱
-						jungScales.forEach(s => {
-							if (counts[s] > 0) {
-								let scaledScore = rawScores[s] * 1.5; 
-								finalScores[s] = scaledScore.toFixed(1);
-							} else {
-								finalScores[s] = "0.0";
-							}
-						});
-
-						return finalScores;
-					}
-
-					// 处理 8 个荣格功能：采用 30 分制 (映射后总分 240)
-					// 逻辑：原始 4 题最高 20 分，乘以 1.5 放大到 30 分，突出高分题目的权重
-					jungScales.forEach(s => {
-						if (counts[s] > 0) {
-							let scaledScore = rawScores[s] * 1.5; 
-							finalScores[s] = scaledScore.toFixed(1);
-						} else {
-							finalScores[s] = "0.0";
+					answers.forEach(ans => {
+						const q = allQuestions.find(item => item.id === ans.id);
+						if (q && q.scale && rawScores.hasOwnProperty(q.scale)) {
+							rawScores[q.scale] += parseInt(ans.value);
+							counts[q.scale] += 1;
 						}
+					});
+
+					const finalScores = {};
+					// 处理动机模块 (1-5 平均分)
+					llosScales.forEach(s => {
+						finalScores[s] = counts[s] > 0 ? (rawScores[s] / counts[s]).toFixed(2) : "0.00";
+					});
+					// 处理功能模块 (映射至 30 分制，4题x5分x1.5 = 30分)
+					jungScales.forEach(s => {
+						finalScores[s] = counts[s] > 0 ? (rawScores[s] * 1.5).toFixed(1) : "0.0";
 					});
 
 					return finalScores;
 				}
 
 				const scores = calculateResults(userAnswers, questions);
+				const dataScores = SCALES_ORDER.map(label => scores[label]);
 
-				// 准备图表数据
-				const labels = SCALES_ORDER;
-				const dataScores = labels.map(label => scores[label]);
-
-				// 渲染文字列表
+				// 渲染显示列表 (Display)
 				const scoreSummaryList = document.getElementById('score-summary-list');
-				labels.forEach((label, index) => {
+				SCALES_ORDER.forEach((label) => {
+					const isJung = ['Ne','Ni','Se','Si','Fe','Fi','Te','Ti'].includes(label);
+					const maxVal = isJung ? "30.0" : "5.0";
 					const item = document.createElement('div');
 					item.className = 'score-item';
 					item.innerHTML = `
 						<span class="dimension-name">${label}</span>
-						<span class="dimension-score">${dataScores[index]} / 10.0</span>
+						<span class="dimension-score">${scores[label]} / ${maxVal}</span>
 					`;
 					scoreSummaryList.appendChild(item);
 				});
@@ -214,28 +186,23 @@
 				new Chart(ctx, {
 					type: 'radar',
 					data: {
-						labels: labels,
+						labels: SCALES_ORDER,
 						datasets: [{
-							label: '能力与动机倾向',
+							label: '倾向程度',
 							data: dataScores,
 							backgroundColor: 'rgba(108, 99, 255, 0.2)',
 							borderColor: '#6C63FF',
-							pointBackgroundColor: '#6C63FF',
 							borderWidth: 2
 						}]
 					},
 					options: {
 						scales: {
-							r: {
-								suggestedMin: 0,
-								suggestedMax: 10,
-								ticks: { stepSize: 2 }
-							}
+							r: { suggestedMin: 0, suggestedMax: 30, ticks: { stepSize: 5 } }
 						}
 					}
 				});
 
-				// 异步保存到 Google Sheets (调用 save_data.js)
+				// 后端保存
 				fetch('/.netlify/functions/save_data', {
 					method: 'POST',
 					body: JSON.stringify({ username, scores })

@@ -1,11 +1,11 @@
-// 接收前端 16 个维度分数，并写入 Google Sheets 的单行 (A:R 列)
 const { google } = require('googleapis'); 
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
+// 1. 定义准确的 14 个维度顺序
 const SCALES_ORDER = [
-    'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti',
-    '学习动机', '学习方式', '信息处理', '思维', '情绪', '社交沟通', '自我管理', '创造'
+    'Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation',
+    'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'
 ];
 
 async function getSheetClient() {
@@ -19,59 +19,34 @@ async function getSheetClient() {
 }
 
 exports.handler = async (event, context) => {
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
-    }
-
     try {
         const body = JSON.parse(event.body);
         const username = body.username || 'Anonymous';
-        const scores = body.scores;
-        const timestamp = new Date().toISOString();
+        const scores = body.scores; // 接收前端传来的 14 个维度分数
+        const timestamp = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
 
-        if (!scores || typeof scores !== 'object' || Object.keys(scores).length !== 16) {
-            return { statusCode: 400, body: 'Missing or invalid scores data. Expected 16 dimensions.' };
+        // 校验维度数量（14个）
+        if (!scores || Object.keys(scores).length !== 14) {
+            return { statusCode: 400, body: '数据维度不匹配，需包含14个得分项' };
         }
 
         const sheets = await getSheetClient();
         
-        // 构建包含 16 个分数的数组，确保顺序与 SCALES_ORDER 严格一致
-        const scoreValues = SCALES_ORDER.map(scaleName => scores[scaleName] || 0);
+        // 按照顺序提取分数
+        const scoreValues = SCALES_ORDER.map(name => scores[name] || 0);
 
-        // 构建最终的单行数据：[Timestamp (A), Username (B), 16 Scores (C:R)]
-        const dataRows = [
-            [
-                timestamp,
-                username,
-                ...scoreValues
-            ]
-        ];
+        // 构建行数据：时间戳 (A), 用户名 (B), 14个分数 (C-P)
+        const dataRows = [[timestamp, username, ...scoreValues]];
 
-        // 将数据附加到 Google Sheet
-        const result = await sheets.spreadsheets.values.append({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Sheet1!A:R',
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-                values: dataRows,
-            },
-        });
+        await sheets.spreadsheets.values.append({
+			spreadsheetId: SPREADSHEET_ID,
+			range: 'Sheet1!A:P', // A列时间, B列姓名, C-P列为14个维度，正好到P列
+			valueInputOption: 'USER_ENTERED',
+			requestBody: { values: dataRows },
+		});
 
-        console.log(`Successfully appended ${result.data.updates.updatedCells} cells.`);
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ message: 'Results saved to Google Sheets.', timestamp }),
-        };
-
+        return { statusCode: 200, body: JSON.stringify({ message: '保存成功' }) };
     } catch (error) {
-        console.error('Error saving data:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ 
-                error: 'Internal Server Error', 
-                details: error.message 
-            }),
-        };
+        return { statusCode: 500, body: error.toString() };
     }
 };

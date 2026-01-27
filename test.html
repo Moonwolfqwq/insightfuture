@@ -230,77 +230,56 @@
 		</div>
 
 		<script type="module">
-			
-			import questions, { SCALES_ORDER } from './questions.js';
+			import { getQuestions } from './questions.js';
 
-			const SCALES_TEMPLATE = SCALES_ORDER.reduce((acc, scale) => {
-				acc[scale] = 0;
-				return acc;
-			}, {});
-			
-			const TOTAL_PRACTICAL_QUESTIONS = 64; 
-			const MAX_RAW_SCORE_PER_QUESTION = 2;
-			const BACKEND_SAVE_URL = '/.netlify/functions/save_data';
-
-			// --- 视图 DOM 引用 (使用您 HTML 中的实际 ID) ---
-			const startView = document.getElementById('start-view');
-			const quizView = document.getElementById('quiz-view');
-			const usernameInput = document.getElementById('username-input');
-			const startButton = document.getElementById('start-button');
-			const questionTextElement = document.getElementById('question-text');
-			const questionCounterElement = document.getElementById('question-counter');
-			const progressFillElement = document.getElementById('progress-fill');
-			const nextButton = document.getElementById('next-button');
-			const circles = document.querySelectorAll('.option-circle');
-
-			// --- 问卷状态变量 ---
+			let questions = [];
 			let currentQuestionIndex = 0;
-			let username = "";
 			let userAnswers = [];
 
-			// 视图切换和初始化函数
-			function startQuiz() {
-				username = usernameInput.value.trim();
-				if (username.length < 2) {
-					alert('请输入您的名称！');
-					return;
-				}
-				localStorage.setItem('quizUsername', username);
-
-				startView.style.display = 'none';
-				quizView.style.display = 'block';
-
-				if (questions.length === 0) {
-					alert('问题数据未加载，请检查 questions.js 文件。');
-					return;
-				}
-				renderQuestion(currentQuestionIndex);
+			// 初始化应用
+			function initApp() {
+				questions = getQuestions(); // 每次刷新页面都会重新打乱
+				renderQuestion(0);
 			}
 
-			// 渲染当前问题内容和进度
 			function renderQuestion(index) {
-				if (index >= questions.length) return;
+				const q = questions[index];
+				const prefixElement = document.getElementById('question-prefix');
+				const textElement = document.getElementById('question-text');
 
+				// --- 逻辑修改：处理两种不同的 LLOS 引导语 ---
 				const question = questions[index];
-				questionTextElement.textContent = question.text;
-				questionCounterElement.textContent = `第 ${index + 1} 题 / 共 ${questions.length} 题`;
+				const prefixElement = document.getElementById('question-prefix');
+				const textElement = document.getElementById('question-text');
 
-				const progress = (index + 1) / questions.length * 100;
-				progressFillElement.style.width = `${progress}%`;
-
-				circles.forEach(c => c.classList.remove('active'));
-				nextButton.disabled = true;
-
-				// 恢复答案
-				const existingAnswer = userAnswers.find(a => a.id === question.id);
-				if (existingAnswer) {
-					const selectedCircle = document.querySelector(`.option-circle[data-value="${existingAnswer.value}"]`);
-					if (selectedCircle) {
-						selectedCircle.classList.add('active');
-						nextButton.disabled = false;
-					}
+				// 处理无动机前缀
+				if (question.scale === 'Amotivation') {
+					prefixElement.innerText = "关于学习英语，我认为：";
+				} else {
+					prefixElement.innerText = ""; // 其他题目清空前缀
 				}
+				
+				textElement.innerText = question.text;
+
+				textElement.innerText = q.text;
+
+				// 重置 5-Likert 选项状态
+				const circles = document.querySelectorAll('.circle');
+				circles.forEach(c => c.classList.remove('active'));
+				document.getElementById('next-btn').disabled = true;
+				
+				// 更新进度
+				updateProgress(index + 1, questions.length);
 			}
+
+			// 监听选项点击 (5-Likert)
+			document.querySelectorAll('.circle').forEach(circle => {
+				circle.addEventListener('click', function() {
+					document.querySelectorAll('.circle').forEach(c => c.classList.remove('active'));
+					this.classList.add('active');
+					document.getElementById('next-btn').disabled = false;
+				});
+			});
 
 			// 计分逻辑：计算 16 个标准化分数 (0.0 - 10.0)
 			function calculateScores() {
@@ -485,5 +464,23 @@
 
 			document.addEventListener('DOMContentLoaded', initApp);
 		</script>
+		
+		<div id="quiz-view">
+			<div class="quiz-container">
+				<div id="question-prefix" style="text-align: left; font-size: 14px; color: #888; font-weight: bold; min-height: 20px;"></div>
+				
+				<h2 id="question-text">加载中...</h2>
+
+				<div class="options-container" style="display: flex; justify-content: space-between; margin: 30px 0;">
+					<div class="circle-wrapper"><div class="circle" data-value="1"></div><span>非常不符</span></div>
+					<div class="circle-wrapper"><div class="circle" data-value="2"></div><span>不符</span></div>
+					<div class="circle-wrapper"><div class="circle" data-value="3"></div><span>一般</span></div>
+					<div class="circle-wrapper"><div class="circle" data-value="4"></div><span>符合</span></div>
+					<div class="circle-wrapper"><div class="circle" data-value="5"></div><span>非常符合</span></div>
+				</div>
+				
+				<button id="next-btn" disabled>下一题</button>
+			</div>
+		</div>
 	</body>
 </html>

@@ -1,82 +1,101 @@
+// 辅助函数：Fisher-Yates 乱序算法
+function shuffle(array) {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+}
+
+const llosQuestions = [
+    { id: 1, part: 'LLOS', scale: 'Intrinsic', text: '因为我喜欢使用英语。' },
+    { id: 2, part: 'LLOS', scale: 'Intrinsic', text: '因为在学习英语时第一次意识到新事物会让我感到快乐。' },
+    { id: 3, part: 'LLOS', scale: 'Intrinsic', text: '因为学习英语会让我产生一种兴奋愉悦的感觉。' },
+    { id: 4, part: 'LLOS', scale: 'Intrinsic', text: '因为当我掌握英语中较难的结构时会感到很享受。' },
+    { id: 5, part: 'LLOS', scale: 'Intrinsic', text: '因为听到英语被使用时会让我感到愉快。' },
+    { id: 6, part: 'LLOS', scale: 'Intrinsic', text: '因为用英语表达会让我感到快乐。' },
+    { id: 7, part: 'LLOS', scale: 'Intrinsic', text: '因为我享受学习这门语言带来的挑战。' },
+    { id: 8, part: 'LLOS', scale: 'Integrated', text: '因为学习英语已经成为我是谁以及我所做事情的一部分。' },
+    { id: 9, part: 'LLOS', scale: 'Integrated', text: '因为掌握英语是我身份认同的一部分。' },
+    { id: 10, part: 'LLOS', scale: 'Integrated', text: '因为英语是我定义自我的重要组成部分。' },
+    { id: 11, part: 'LLOS', scale: 'Integrated', text: '因为我把自己看作是能够说英语的那类人。' },
+    { id: 12, part: 'LLOS', scale: 'Integrated', text: '因为会说英语对我如何看待自己而言很重要。' },
+    { id: 13, part: 'LLOS', scale: 'Identified', text: '因为我认为懂一些英语是个好主意。' },
+    { id: 14, part: 'LLOS', scale: 'Identified', text: '因为我选择成为一个会多种语言的人。' },
+    { id: 15, part: 'LLOS', scale: 'Identified', text: '因为我认为英语对我的个人发展很重要。' },
+    { id: 16, part: 'LLOS', scale: 'Identified', text: '因为英语能帮助我实现对我而言重要的目标。' },
+    { id: 17, part: 'LLOS', scale: 'Identified', text: '因为说英语能让我成为一个更全面发展的人。' },
+    { id: 18, part: 'LLOS', scale: 'Introjected', text: '因为我感到自己有义务学习英语。' },
+    { id: 19, part: 'LLOS', scale: 'Introjected', text: '因为如果我不能用英语与英语使用者交流，我会感到羞愧。' },
+    { id: 20, part: 'LLOS', scale: 'Introjected', text: '因为如果我不懂这门语言，我会感到尴尬。' },
+    { id: 21, part: 'LLOS', scale: 'Introjected', text: '为了向自己证明我是一个合格的公民，因为我会说英语。' },
+    { id: 22, part: 'LLOS', scale: 'Introjected', text: '因为会说英语会让我看起来更优秀。' },
+    { id: 23, part: 'LLOS', scale: 'External', text: '为了获得课程学分。' },
+    { id: 24, part: 'LLOS', scale: 'External', text: '因为别人要求我这样做。' },
+    { id: 25, part: 'LLOS', scale: 'External', text: '为了将来能获得更体面的工作。' },
+    { id: 26, part: 'LLOS', scale: 'External', text: '为了在英语考试中取得好成绩。' },
+    { id: 27, part: 'LLOS', scale: 'External', text: '因为英语能帮助我将来获得更高的收入。' },
+    { id: 28, part: 'LLOS', scale: 'Amotivation', text: '学习英语是在浪费时间。' },
+    { id: 29, part: 'LLOS', scale: 'Amotivation', text: '学习英语不会改变任何事情。' },
+    { id: 30, part: 'LLOS', scale: 'Amotivation', text: '我不明白为什么我必须学习英语。' },
+    { id: 31, part: 'LLOS', scale: 'Amotivation', text: '我已经不想再学习英语了。' },
+    { id: 32, part: 'LLOS', scale: 'Amotivation', text: '我不理解学习英语的意义。' }
+];
+
+const jungQuestions = [
+    { id: 33, part: 'Jung', scale: 'Ne', text: '我享受自由的联想并与他人分享灵感。' },
+    { id: 34, part: 'Jung', scale: 'Ne', text: '新概念总能唤起我旺盛的好奇心和探索欲。' },
+    { id: 35, part: 'Jung', scale: 'Ne', text: '我的思维比较发散，常常会脱离当前的情景，转移到其他的地方。' },
+    { id: 36, part: 'Jung', scale: 'Ne', text: '我常常不由自主的感受到事物之间普遍的、天然的联系。' },
+    { id: 37, part: 'Jung', scale: 'Ni', text: '我常常通过直觉形成对事物气场的整体印象，并对其铭记于心。' },
+    { id: 38, part: 'Jung', scale: 'Ni', text: '我经常发现自己有一些难以确切描述的模糊想法，并能够在有需要的时候回想起来。' },
+    { id: 39, part: 'Jung', scale: 'Ni', text: '我擅长运用直觉，透过现象洞察到事物的本质。' },
+    { id: 40, part: 'Jung', scale: 'Ni', text: '即使缺乏充足的信息或证据，我也经常能突然悟出事件的关键之处。' },
+    { id: 41, part: 'Jung', scale: 'Se', text: '我喜欢亲身体验或亲自动手操作，并从中获得乐趣。' },
+    { id: 42, part: 'Jung', scale: 'Se', text: '我喜欢追求直接的感官刺激和体验，包括视听体验、品味美食、体育运动等。' },
+    { id: 43, part: 'Jung', scale: 'Se', text: '我是个活在当下的人，当前实实在在的体验对我最重要。' },
+    { id: 44, part: 'Jung', scale: 'Se', text: '我乐于捕捉事物中局部的、细节的亮点。' },
+    { id: 45, part: 'Jung', scale: 'Si', text: '我享受安稳的生活节奏和熟悉的日程安排。' },
+    { id: 46, part: 'Jung', scale: 'Si', text: '我习惯用重复训练的方式来学习新事物。' },
+    { id: 47, part: 'Jung', scale: 'Si', text: '我关注熟悉事物的细节变化，有不一样的地方就会感到一些本能反应。' },
+    { id: 48, part: 'Jung', scale: 'Si', text: '我习惯以较为保守的视角看待事物，通常更愿意相信经过时间检验的观念。' },
+    { id: 49, part: 'Jung', scale: 'Fe', text: '我喜欢主动地向他人传递友好和善意，并且希望其他人也能这样对待自己。' },
+    { id: 50, part: 'Jung', scale: 'Fe', text: '我做事时会优先考虑他人的感受和需求。' },
+    { id: 51, part: 'Jung', scale: 'Fe', text: '我喜欢接触他人、理解他人。' },
+    { id: 52, part: 'Jung', scale: 'Fe', text: '我常常能对他人的喜怒哀乐感同身受。' },
+    { id: 53, part: 'Jung', scale: 'Fi', text: '我常常回顾自己的内心感受，发掘自己的内心世界。' },
+    { id: 54, part: 'Jung', scale: 'Fi', text: '我执着于内心的喜好和需求，并为此付出很多时间和精力。' },
+    { id: 55, part: 'Jung', scale: 'Fi', text: '我常常感到自己内心波澜起伏、百感交集。' },
+    { id: 56, part: 'Jung', scale: 'Fi', text: '我的价值判断遵循一套完全源于自己的标准，并反感别人的干涉。' },
+    { id: 57, part: 'Jung', scale: 'Te', text: '我认为生活中的事情应当有客观的标准（例如能力分数，时间消耗等）。' },
+    { id: 58, part: 'Jung', scale: 'Te', text: '我乐于评判事物的实用价值。' },
+    { id: 59, part: 'Jung', scale: 'Te', text: '我常以效率为标准律己待人。' },
+    { id: 60, part: 'Jung', scale: 'Te', text: '我做事总会把目标放在第一位。' },
+    { id: 61, part: 'Jung', scale: 'Ti', text: '我常常对事物进行反复的思考和推敲。' },
+    { id: 62, part: 'Jung', scale: 'Ti', text: '我看待事物时心中常保持不带感情色彩的旁观者视角。' },
+    { id: 63, part: 'Jung', scale: 'Ti', text: '我喜欢问“为什么”，总想搞明白事物的运作方式。' },
+    { id: 64, part: 'Jung', scale: 'Ti', text: '我常能察觉到逻辑中的不严谨之处。' }
+];
+
+const fillerQuestions = [
+    { id: 65, part: 'Filler', scale: null, text: '我在社交活动后常常需要独处以回复心理能量。' },
+    { id: 66, part: 'Filler', scale: null, text: '我愿意把自己的想法主动地表达出来，而不是把它们藏在内心。' },
+    { id: 67, part: 'Filler', scale: null, text: '我比较在意周围环境是否整洁。' },
+    { id: 68, part: 'Filler', scale: null, text: '我会留意天气变化对自己状态的影响。' },
+    { id: 69, part: 'Filler', scale: null, text: '我对自己目前的作息情况基本满意。' },
+    { id: 70, part: 'Filler', scale: null, text: '我通常会提前规划第二天要做的事情。' }
+];
+
+export const getQuestions = () => {
+    // 前半段：LLOS 内部打乱
+    const part1 = shuffle(llosQuestions);
+    // 后半段：荣格内部打乱
+    const part2 = shuffle(jungQuestions);
+    return [...part1, ...part2];
+};
+
 export const SCALES_ORDER = [
-    // 荣格八维 (8个功能)
-    'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti',
-    // 可发展领域 (8个维度)
-    '学习动机', '学习方式', '信息处理', '思维', '情绪', '社交沟通', '自我管理', '创造'
+    'Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation',
+    'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'
 ];
-
-const questions = [
-    { id: 18, text: '面对信息时，我会下意识地寻找其背后的深层含义或结构。', type: 'practical', func_scale: 'Ni', func_direction: 1, dev_scale: '信息处理', dev_direction: 1 },
-    { id: 48, text: '我会在对话中专注于对方观点的逻辑一致性，而不太关注情感因素。', type: 'practical', func_scale: 'Ti', func_direction: 1, dev_scale: '社交沟通', dev_direction: -1 },
-    { id: 58, text: '我会花很多时间沉浸在自己的想法世界里，并从中构建独特概念。', type: 'practical', func_scale: 'Ni', func_direction: 1, dev_scale: '创造', dev_direction: 1 },
-    { id: 4, text: '如果学习内容太抽象，我会感到难以投入。', type: 'practical', func_scale: 'Si', func_direction: 1, dev_scale: '学习动机', dev_direction: -1 },
-    { id: 15, text: '在学习复杂内容时，我会建立清晰的任务流程来帮助理解。', type: 'practical', func_scale: 'Te', func_direction: 1, dev_scale: '学习方式', dev_direction: 1 },
-    { id: 55, text: '我擅长把任务拆分、安排优先级，并推动自己完成。', type: 'practical', func_scale: 'Te', func_direction: 1, dev_scale: '自我管理', dev_direction: 1 },
-    { id: 36, text: '我通常依靠过去的经验来安抚或调节自己的情绪。', type: 'practical', func_scale: 'Si', func_direction: 1, dev_scale: '情绪', dev_direction: 1 },
-    { id: 2, text: '当学习任务很模糊时，我仍能凭直觉坚持探索。', type: 'practical', func_scale: 'Ni', func_direction: 1, dev_scale: '学习动机', dev_direction: 1 },
-    { id: 62, text: '我在创意类活动中更注重表达内在价值、情绪或个人故事。', type: 'practical', func_scale: 'Fi', func_direction: 1, dev_scale: '创造', dev_direction: 1 },
-    { id: 61, text: '当进行创意合作时，我擅长从他人的情绪或反应中捕捉创意方向。', type: 'practical', func_scale: 'Fe', func_direction: 1, dev_scale: '创造', dev_direction: 1 },
-    { id: 45, text: '我很容易察觉别人的情绪，并会自动调整自己的表达方式。', type: 'practical', func_scale: 'Fe', func_direction: 1, dev_scale: '社交沟通', dev_direction: 1 },
-    { id: 53, text: '我在团队任务中能主动承担责任以维持整体执行进度。', type: 'practical', func_scale: 'Fe', func_direction: 1, dev_scale: '自我管理', dev_direction: 1 },
-    { id: 39, text: '在情绪失控时，我会尝试用理性的方式把问题逐一分析解决。', type: 'practical', func_scale: 'Te', func_direction: 1, dev_scale: '情绪', dev_direction: -1 },
-    { id: 25, text: '我喜欢探索不同的可能性和想法来解决问题。', type: 'practical', func_scale: 'Ne', func_direction: 1, dev_scale: '思维', dev_direction: 1 },
-    { id: 22, text: '我会根据自己内心的价值判断来筛选哪些信息是重要的。', type: 'practical', func_scale: 'Fi', func_direction: 1, dev_scale: '信息处理', dev_direction: -1 },
-    { id: 52, text: '在执行任务时，我更倾向遵循固定步骤并保持稳定节奏。', type: 'practical', func_scale: 'Si', func_direction: 1, dev_scale: '自我管理', dev_direction: 1 },
-    { id: 44, text: '我更喜欢与熟悉的人互动，并依靠既有关系模式进行沟通。', type: 'practical', func_scale: 'Si', func_direction: 1, dev_scale: '社交沟通', dev_direction: -1 },
-    { id: 16, text: '我会尝试拆解知识背后的逻辑结构以找到最佳学习方式。', type: 'practical', func_scale: 'Ti', func_direction: 1, dev_scale: '学习方式', dev_direction: 1 },
-    { id: 69, text: '当我手机电量低时，我会紧张或立刻寻找充电器。', type: 'filler', func_scale: null, func_direction: 0, dev_scale: null, dev_direction: 0 },
-    { id: 5, text: '来自他人的鼓励或认同能提升我的学习动力。', type: 'practical', func_scale: 'Fe', func_direction: 1, dev_scale: '学习动机', dev_direction: 1 },
-    { id: 3, text: '遇到有趣的学习主题时，我会立刻动手尝试。', type: 'practical', func_scale: 'Se', func_direction: 1, dev_scale: '学习动机', dev_direction: 1 },
-    { id: 1, text: '我会主动从课外寻找更多相关内容来扩展学习方向。', type: 'practical', func_scale: 'Ne', func_direction: 1, dev_scale: '学习动机', dev_direction: 1 },
-    { id: 57, text: '我经常在没有提示的情况下主动提出全新点子。', type: 'practical', func_scale: 'Ne', func_direction: 1, dev_scale: '创造', dev_direction: 1 },
-    { id: 63, text: '当创意任务需要明确目标时，我能够快速制定产出计划并推进执行。', type: 'practical', func_scale: 'Te', func_direction: 1, dev_scale: '创造', dev_direction: 1 },
-    { id: 27, text: '我能迅速在不同任务或思路间切换注意力。', type: 'practical', func_scale: 'Se', func_direction: 1, dev_scale: '思维', dev_direction: 1 },
-    { id: 37, text: '我对他人的情绪变化很敏感，容易受到影响。', type: 'practical', func_scale: 'Fe', func_direction: 1, dev_scale: '情绪', dev_direction: 1 },
-    { id: 11, text: '我习惯通过动手或实际操作来理解学习内容。', type: 'practical', func_scale: 'Se', func_direction: 1, dev_scale: '学习方式', dev_direction: 1 },
-    { id: 10, text: '我能根据长远的学习目标调整自己的学习方式。', type: 'practical', func_scale: 'Ni', func_direction: 1, dev_scale: '学习方式', dev_direction: 1 },
-    { id: 20, text: '我更容易记住那些和旧经验或熟悉背景有关的信息。', type: 'practical', func_scale: 'Si', func_direction: 1, dev_scale: '信息处理', dev_direction: 1 },
-    { id: 30, text: '我在决策时常依赖个人的感受和偏好，而不是逻辑或事实。', type: 'practical', func_scale: 'Fi', func_direction: 1, dev_scale: '思维', dev_direction: -1 },
-    { id: 31, text: '我做决定时主要依赖逻辑分析而非直觉或情绪。', type: 'practical', func_scale: 'Te', func_direction: 1, dev_scale: '思维', dev_direction: 1 },
-    { id: 68, text: '在等待排队时，我会观察周围的人或环境。', type: 'filler', func_scale: null, func_direction: 0, dev_scale: null, dev_direction: 0 },
-    { id: 35, text: '我的情绪容易受到当下环境或周围刺激的影响。', type: 'practical', func_scale: 'Se', func_direction: 1, dev_scale: '情绪', dev_direction: 1 },
-    { id: 59, text: '我能很快从周围的真实事物或感官刺激中获得灵感。', type: 'practical', func_scale: 'Se', func_direction: 1, dev_scale: '创造', dev_direction: 1 },
-    { id: 49, text: '我会在任务开始前主动尝试不同方法，而不是按部就班。', type: 'practical', func_scale: 'Ne', func_direction: 1, dev_scale: '自我管理', dev_direction: -1 },
-    { id: 28, text: '我习惯从熟悉经验中寻找解决问题的方法。', type: 'practical', func_scale: 'Si', func_direction: 1, dev_scale: '思维', dev_direction: 1 },
-    { id: 17, text: '我能迅速从大量信息中看出可能的趋势或新方向。', type: 'practical', func_scale: 'Ne', func_direction: 1, dev_scale: '信息处理', dev_direction: 1 },
-    { id: 46, text: '我倾向于尊重自己的内心感受，在沟通中真实地表达自己。', type: 'practical', func_scale: 'Fi', func_direction: 1, dev_scale: '社交沟通', dev_direction: 1 },
-    { id: 23, text: '我会用明确的标准和步骤来整理复杂信息，确保不遗漏重点。', type: 'practical', func_scale: 'Te', func_direction: 1, dev_scale: '信息处理', dev_direction: 1 },
-    { id: 47, text: '在团队沟通中，我喜欢用明确、结构化的方式分配任务或表达观点。', type: 'practical', func_scale: 'Te', func_direction: 1, dev_scale: '社交沟通', dev_direction: 1 },
-    { id: 64, text: '当需要做创意产出时，我更依赖精密推理与结构，而不是灵感或直觉。', type: 'practical', func_scale: 'Ti', func_direction: 1, dev_scale: '创造', dev_direction: -1 },
-    { id: 54, text: '我在自律方面非常依赖情绪状态，情绪低落时难以保持节奏。', type: 'practical', func_scale: 'Fi', func_direction: 1, dev_scale: '自我管理', dev_direction: -1 },
-    { id: 60, text: '面对艺术、设计或创意任务时，我习惯依赖既有范本且很难跳脱出来。', type: 'practical', func_scale: 'Si', func_direction: 1, dev_scale: '创造', dev_direction: -1 },
-    { id: 19, text: '我习惯先关注信息中最直接、最清晰的细节部分。', type: 'practical', func_scale: 'Se', func_direction: 1, dev_scale: '信息处理', dev_direction: 1 },
-    { id: 7, text: '我会根据学习目标为自己规划不同阶段的动力来源。', type: 'practical', func_scale: 'Te', func_direction: 1, dev_scale: '学习动机', dev_direction: 1 },
-    { id: 65, text: '我更喜欢甜味还是咸味的零食？', type: 'filler', func_scale: null, func_direction: 0, dev_scale: null, dev_direction: 0 },
-    { id: 42, text: '我习惯根据对方长期的性格或动机来判断他说话的含义。', type: 'practical', func_scale: 'Ni', func_direction: 1, dev_scale: '社交沟通', dev_direction: -1 },
-    { id: 12, text: '我更喜欢按照熟悉的步骤或结构进行学习。', type: 'practical', func_scale: 'Si', func_direction: 1, dev_scale: '学习方式', dev_direction: 1 },
-    { id: 56, text: '我会在行动前仔细分析任务结构，以确保执行时不会偏离。', type: 'practical', func_scale: 'Ti', func_direction: 1, dev_scale: '自我管理', dev_direction: 1 },
-    { id: 24, text: '我喜欢分析信息之间的逻辑关系，并将其压缩成清晰的结构。', type: 'practical', func_scale: 'Ti', func_direction: 1, dev_scale: '信息处理', dev_direction: 1 },
-    { id: 38, text: '我会认真体会自己的内心情绪，并根据感觉做出调整。', type: 'practical', func_scale: 'Fi', func_direction: 1, dev_scale: '情绪', dev_direction: 1 },
-    { id: 26, text: '我会根据长远的趋势和直觉来推测未来可能发生的情况。', type: 'practical', func_scale: 'Ni', func_direction: 1, dev_scale: '思维', dev_direction: 1 },
-    { id: 40, text: '我会分析情绪背后的逻辑，以便更好地管理它们。', type: 'practical', func_scale: 'Ti', func_direction: 1, dev_scale: '情绪', dev_direction: -1 },
-    { id: 6, text: '如果学习内容无法与我的价值感产生联系，我会很难保持兴趣。', type: 'practical', func_scale: 'Fi', func_direction: 1, dev_scale: '学习动机', dev_direction: -1 },
-    { id: 34, text: '面对压力时，我会反思自己情绪背后的深层原因。', type: 'practical', func_scale: 'Ni', func_direction: 1, dev_scale: '情绪', dev_direction: -1 },
-    { id: 67, text: '我通常习惯在一天中的某个固定时间休息。', type: 'filler', func_scale: null, func_direction: 0, dev_scale: null, dev_direction: 0 },
-    { id: 51, text: '我常因为外部刺激或即时兴趣而偏离原计划。', type: 'practical', func_scale: 'Se', func_direction: 1, dev_scale: '自我管理', dev_direction: -1 },
-    { id: 8, text: '我常常从分析问题中激发继续深入学习的动力。', type: 'practical', func_scale: 'Ti', func_direction: 1, dev_scale: '学习动机', dev_direction: 1 },
-    { id: 29, text: '我会根据自己的价值判断来衡量决策的合理性。', type: 'practical', func_scale: 'Fe', func_direction: 1, dev_scale: '思维', dev_direction: -1 },
-    { id: 9, text: '我会用不同来源的知识组合出新的学习方法。', type: 'practical', func_scale: 'Ne', func_direction: 1, dev_scale: '学习方式', dev_direction: 1 },
-    { id: 43, text: '我会注意对方的表情、动作等即时细节，并及时做出回应。', type: 'practical', func_scale: 'Se', func_direction: 1, dev_scale: '社交沟通', dev_direction: 1 },
-    { id: 32, text: '我喜欢独立分析问题，找出事情背后的原理。', type: 'practical', func_scale: 'Ti', func_direction: 1, dev_scale: '思维', dev_direction: 1 },
-    { id: 66, text: '我在学习或做事时是否会注意到天气好坏？', type: 'filler', func_scale: null, func_direction: 0, dev_scale: null, dev_direction: 0 },
-    { id: 70, text: '我有时会因为兴趣来临而突然想做无关的事情。', type: 'filler', func_scale: null, func_direction: 0, dev_scale: null, dev_direction: 0 },
-    { id: 33, text: '当情绪低落时，我会主动寻找新的想法或活动让自己恢复状态。', type: 'practical', func_scale: 'Ne', func_direction: 1, dev_scale: '情绪', dev_direction: 1 },
-    { id: 21, text: '当别人解释信息给我听时，我更容易抓住内容要点。', type: 'practical', func_scale: 'Fe', func_direction: 1, dev_scale: '信息处理', dev_direction: 1 },
-    { id: 50, text: '我能为长期任务设定清晰愿景，并坚持按照规划行动。', type: 'practical', func_scale: 'Ni', func_direction: 1, dev_scale: '自我管理', dev_direction: 1 },
-    { id: 14, text: '我会依照自己内心的感觉选择最合适的学习方式，而不是跟随他人。', type: 'practical', func_scale: 'Fi', func_direction: 1, dev_scale: '学习方式', dev_direction: -1 },
-    { id: 13, text: '当与别人一起学习时，我的理解方式会变得更顺畅。', type: 'practical', func_scale: 'Fe', func_direction: 1, dev_scale: '学习方式', dev_direction: 1 },
-    { id: 41, text: '在社交场合中，我常能提出新的话题或想法让互动继续下去。', type: 'practical', func_scale: 'Ne', func_direction: 1, dev_scale: '社交沟通', dev_direction: 1 },
-];
-
-// 将问题列表和维度顺序导出
-export default questions;

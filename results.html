@@ -118,122 +118,129 @@
 			<a href="test.html" class="restart-button">重新测试</a>
 		</div>
 
-		<script>
-			document.addEventListener('DOMContentLoaded', function() {
-				
-				// 定义在结果页展示的 8 个人格可发展领域
-				const DOMAIN_LABELS_TO_SHOW = [
-					'学习动机', 
-					'学习方式', 
-					'信息处理', 
-					'思维', 
-					'情绪', 
-					'社交沟通', 
-					'自我管理', 
-					'创造'
-				];
+		<script type="module">
+			import { getQuestions, SCALES_ORDER } from './questions.js';
 
-				// --- 初始化：从本地存储获取用户名和结果数据 ---
-				const username = localStorage.getItem('quizUsername') || '匿名用户';
-				// 关键：从 test.html 的最新脚本中获取包含所有 16 个分数的对象
-				const resultsString = localStorage.getItem('quizResults'); 
-				const userGreeting = document.getElementById('user-greeting');
-				const scoreSummaryList = document.getElementById('score-summary-list');
+			window.onload = function() {
+				// 从 localStorage 读取测试数据
+				const username = localStorage.getItem('survey_username') || '匿名用户';
+				const userAnswers = JSON.parse(localStorage.getItem('survey_answers') || '[]');
+				const questions = getQuestions(); // 获取包含 part 信息的完整题目列表
 
-				userGreeting.textContent = `${username}，这是您在各个能力倾向领域上的表现：`;
-
-				if (!resultsString) {
-					userGreeting.textContent = '无法找到您的测试结果，请先完成测试。';
-					// 清除图表容器，防止加载失败
-					document.getElementById('radarChart').style.display = 'none';
+				if (userAnswers.length === 0) {
+					alert('未找到测试记录，请重新测试。');
+					window.location.href = 'test.html';
 					return;
 				}
 
-				const allResults = JSON.parse(resultsString);
-				
-				// --- 筛选数据：只保留 8 个人格可发展领域 ---
-				const labels = [];
-				const dataScores = [];
-				
-				DOMAIN_LABELS_TO_SHOW.forEach(domain => {
-					// 仅添加在目标列表中且在结果对象中存在的分数
-					if (allResults.hasOwnProperty(domain)) {
-						labels.push(domain);
-						dataScores.push(allResults[domain]);
-					}
-				});
+				document.getElementById('display-username').innerText = username;
 
-				// --- 渲染详细分数列表 ---
+					// --- 修改 results.html 中的计分逻辑 ---
+					function calculateResults(answers, allQuestions) {
+						const rawScores = {};
+						const counts = {};
+						
+						// 14个维度定义
+						const llosScales = ['Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation'];
+						const jungScales = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
+						const allScales = [...llosScales, ...jungScales];
+
+						allScales.forEach(s => { rawScores[s] = 0; counts[s] = 0; });
+
+						// 累加原始分
+						answers.forEach(ans => {
+							const q = allQuestions.find(item => item.id === ans.id);
+							if (q && q.scale && rawScores.hasOwnProperty(q.scale)) {
+								rawScores[q.scale] += parseInt(ans.value);
+								counts[q.scale] += 1;
+							}
+						});
+
+						const finalScores = {};
+
+						// 语言动机：保留 1-5 平均分（展现细微动机差异）
+						llosScales.forEach(s => {
+							finalScores[s] = counts[s] > 0 ? (rawScores[s] / counts[s]).toFixed(2) : "0.00";
+						});
+
+						// 荣格功能：实现每项 30 分制（总分 240）
+						// 逻辑：4道题原始最高20分，乘以 1.5 映射到 30 分，从而拉开高分差距，体现相对强弱
+						jungScales.forEach(s => {
+							if (counts[s] > 0) {
+								let scaledScore = rawScores[s] * 1.5; 
+								finalScores[s] = scaledScore.toFixed(1);
+							} else {
+								finalScores[s] = "0.0";
+							}
+						});
+
+						return finalScores;
+					}
+
+					// 处理 8 个荣格功能：采用 30 分制 (映射后总分 240)
+					// 逻辑：原始 4 题最高 20 分，乘以 1.5 放大到 30 分，突出高分题目的权重
+					jungScales.forEach(s => {
+						if (counts[s] > 0) {
+							let scaledScore = rawScores[s] * 1.5; 
+							finalScores[s] = scaledScore.toFixed(1);
+						} else {
+							finalScores[s] = "0.0";
+						}
+					});
+
+					return finalScores;
+				}
+
+				const scores = calculateResults(userAnswers, questions);
+
+				// 准备图表数据
+				const labels = SCALES_ORDER;
+				const dataScores = labels.map(label => scores[label]);
+
+				// 渲染文字列表
+				const scoreSummaryList = document.getElementById('score-summary-list');
 				labels.forEach((label, index) => {
-					const score = dataScores[index];
 					const item = document.createElement('div');
 					item.className = 'score-item';
 					item.innerHTML = `
 						<span class="dimension-name">${label}</span>
-						<span class="dimension-score">${score} / 10.0</span>
+						<span class="dimension-score">${dataScores[index]} / 10.0</span>
 					`;
 					scoreSummaryList.appendChild(item);
 				});
 
-				// --- 绘制雷达图 ---
+				// 绘制雷达图
 				const ctx = document.getElementById('radarChart').getContext('2d');
 				new Chart(ctx, {
 					type: 'radar',
 					data: {
 						labels: labels,
 						datasets: [{
-							label: '得分',
+							label: '能力与动机倾向',
 							data: dataScores,
 							backgroundColor: 'rgba(108, 99, 255, 0.2)',
 							borderColor: '#6C63FF',
 							pointBackgroundColor: '#6C63FF',
-							pointBorderColor: '#fff',
-							pointHoverBackgroundColor: '#fff',
-							pointHoverBorderColor: '#6C63FF',
 							borderWidth: 2
 						}]
 					},
 					options: {
-						responsive: true,
 						scales: {
 							r: {
-								angleLines: {
-									display: true,
-									color: '#ccc'
-								},
-								grid: {
-									color: 'rgba(200, 200, 200, 0.5)'
-								},
-								// 确保轴范围正确
 								suggestedMin: 0,
 								suggestedMax: 10,
-								pointLabels: {
-									font: {
-										size: 14
-									}
-								},
-								ticks: {
-									stepSize: 2,
-									backdropColor: 'transparent',
-									color: '#555'
-								}
-							}
-						},
-						plugins: {
-							legend: {
-								display: false
-							},
-							tooltip: {
-								callbacks: {
-									label: function(context) {
-										return ` ${context.dataset.label}: ${context.parsed.r} / 10.0`;
-									}
-								}
+								ticks: { stepSize: 2 }
 							}
 						}
 					}
 				});
-			});
+
+				// 异步保存到 Google Sheets (调用 save_data.js)
+				fetch('/.netlify/functions/save_data', {
+					method: 'POST',
+					body: JSON.stringify({ username, scores })
+				}).catch(err => console.error('保存失败:', err));
+			};
 		</script>
 	</body>
 </html>

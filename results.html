@@ -1,213 +1,151 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>测试结果</title>
-		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-		
-		<style>
-			/* --- 结果页基础样式 --- */
-			body { 
-				font-family: Arial, sans-serif; 
-				text-align: center; 
-				background-color: #f4f7f6; 
-				color: #333;
-				padding: 20px;
-			}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试结果</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f4f7f6; color: #333; padding: 20px; }
+        .results-container { max-width: 800px; margin: 30px auto; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #6C63FF; margin-bottom: 5px; }
+        .username-display { font-size: 1.2em; color: #555; margin-bottom: 30px; }
+        
+        /* 图表容器 */
+        .chart-container { position: relative; margin: 0 auto 40px auto; height: 400px; width: 100%; }
+        
+        /* 分数列表样式 */
+        .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 30px; text-align: left; }
+        .score-item { background: #f9f9ff; padding: 15px; border-radius: 10px; border-left: 4px solid #6C63FF; display: flex; justify-content: space-between; align-items: center; }
+        .dimension-name { font-weight: bold; color: #444; }
+        .dimension-score { color: #6C63FF; font-family: 'Courier New', Courier, monospace; font-weight: bold; }
+        
+        .btn { background: #6C63FF; color: white; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 16px; margin-top: 30px; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #5a52d5; }
+    </style>
+</head>
+<body>
 
-			/* 结果容器和标题样式 */
-			.results-container {
-				max-width: 800px;
-				margin: 50px auto;
-				padding: 40px;
-				background-color: #ffffff;
-				border-radius: 12px;
-				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-			}
+    <div class="results-container">
+        <h1>测试分析结果</h1>
+        <p class="username-display">体验者：<span id="display-username">加载中...</span></p>
 
-			h1 {
-				color: #6C63FF;
-				font-size: 2.2em;
-				margin-bottom: 10px;
-			}
+        <div class="chart-container">
+            <canvas id="radarChart"></canvas>
+        </div>
 
-			p.username-display {
-				font-size: 1.2em;
-				color: #555;
-				margin-bottom: 40px;
-			}
+        <h3 style="text-align: left; color: #6C63FF; border-bottom: 2px solid #eee; padding-bottom: 10px;">维度得分详情</h3>
+        <div id="score-summary-list" class="score-grid">
+            </div>
 
-			/* --- 雷达图容器样式 --- */
-			.chart-box {
-				width: 100%;
-				height: auto;
-				margin: 40px auto;
-			}
-			
-			#radarChart {
-				max-width: 600px;
-				margin: 0 auto;
-			}
+        <a href="index.html" class="btn">重新测试</a>
+    </div>
 
-			/* --- 维度分数列表样式 --- */
-			.score-summary {
-				text-align: left;
-				margin-top: 30px;
-				padding: 0 20px;
-			}
+    <script type="module">
+        import { getQuestions, SCALES_ORDER } from './questions.js';
 
-			.score-item {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				padding: 10px 0;
-				border-bottom: 1px dashed #eee;
-			}
+        window.onload = async function() {
+            const username = localStorage.getItem('quizUsername') || '匿名用户';
+            const userAnswers = JSON.parse(localStorage.getItem('userAnswers') || '[]');
+            const allQuestions = getQuestions();
 
-			.score-item:last-child {
-				border-bottom: none;
-			}
+            if (userAnswers.length === 0) {
+                alert('未找到测试记录，请先完成测试。');
+                window.location.href = 'test.html';
+                return;
+            }
 
-			.dimension-name {
-				font-weight: bold;
-				color: #4A4A4A;
-			}
+            document.getElementById('display-username').innerText = username;
 
-			.dimension-score {
-				background-color: #e6e6ff;
-				color: #6C63FF;
-				padding: 5px 10px;
-				border-radius: 4px;
-				font-weight: bold;
-			}
-			
-			/* --- 返回按钮样式 --- */
-			.restart-button {
-				display: inline-block;
-				background-color: #6C63FF;
-				color: white;
-				padding: 12px 30px;
-				border: none;
-				border-radius: 25px;
-				font-size: 1.1em;
-				cursor: pointer;
-				text-decoration: none;
-				margin-top: 40px;
-				transition: background-color 0.3s;
-			}
-			
-			.restart-button:hover {
-				background-color: #574BDB;
-			}
-		</style>
-	</head>
-	<body>
+            // 1. 计分逻辑
+            function calculateResults(answers, questions) {
+                const rawScores = {};
+                const counts = {};
+                const jungScales = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
+                const llosScales = ['Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation'];
 
-		<div class="results-container">
-			<h1>您的能力倾向测试结果</h1>
-			<p class="username-display" id="user-greeting">正在加载...</p>
+                // 初始化
+                SCALES_ORDER.forEach(s => { rawScores[s] = 0; counts[s] = 0; });
 
-			<div class="chart-box">
-				<canvas id="radarChart"></canvas>
-			</div>
+                // 累加
+                answers.forEach(ans => {
+                    const q = questions.find(item => item.id === parseInt(ans.id));
+                    if (q && q.scale && rawScores.hasOwnProperty(q.scale)) {
+                        rawScores[q.scale] += parseInt(ans.value);
+                        counts[q.scale]++;
+                    }
+                });
 
-			<h2>人格可发展领域总结</h2>
-			<div id="score-summary-list" class="score-summary"></div>
+                const finalScores = {};
+                // 语言动机 (1-5 平均分)
+                llosScales.forEach(s => {
+                    finalScores[s] = counts[s] > 0 ? (rawScores[s] / counts[s]).toFixed(2) : "0.00";
+                });
+                // 荣格功能 (20分原始分 * 1.5 = 30分制)
+                jungScales.forEach(s => {
+                    finalScores[s] = counts[s] > 0 ? (rawScores[s] * 1.5).toFixed(1) : "0.0";
+                });
 
-			<a href="test.html" class="restart-button">重新测试</a>
-		</div>
+                return finalScores;
+            }
 
-		<script type="module">
-			import { getQuestions, SCALES_ORDER } from './questions.js';
+            const scores = calculateResults(userAnswers, allQuestions);
 
-			window.onload = function() {
-				const username = localStorage.getItem('quizUsername') || '匿名用户';
-				const userAnswers = JSON.parse(localStorage.getItem('userAnswers') || '[]');
-				const questions = getQuestions();
+            // 2. 渲染显示列表
+            const scoreSummaryList = document.getElementById('score-summary-list');
+            SCALES_ORDER.forEach((label) => {
+                const isJung = ['Ne','Ni','Se','Si','Fe','Fi','Te','Ti'].includes(label);
+                const maxVal = isJung ? "30.0" : "5.0";
+                
+                const item = document.createElement('div');
+                item.className = 'score-item';
+                item.innerHTML = `
+                    <span class="dimension-name">${label}</span>
+                    <span class="dimension-score">${scores[label]} / ${maxVal}</span>
+                `;
+                scoreSummaryList.appendChild(item);
+            });
 
-				if (userAnswers.length === 0) {
-					alert('未找到测试记录！');
-					window.location.href = 'test.html';
-					return;
-				}
+            // 3. 绘制雷达图
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: SCALES_ORDER,
+                    datasets: [{
+                        label: '得分分布',
+                        data: SCALES_ORDER.map(label => scores[label]),
+                        backgroundColor: 'rgba(108, 99, 255, 0.2)',
+                        borderColor: '#6C63FF',
+                        pointBackgroundColor: '#6C63FF',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            suggestedMin: 0,
+                            suggestedMax: 30, // 适配 30 分制
+                            ticks: { stepSize: 5 }
+                        }
+                    }
+                }
+            });
 
-				document.getElementById('display-username').innerText = username;
-
-				// 计分函数：LLOS 5分制 / Jung 30分制
-				function calculateResults(answers, allQuestions) {
-					const rawScores = {};
-					const counts = {};
-					const jungScales = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
-					const llosScales = ['Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation'];
-
-					SCALES_ORDER.forEach(s => { rawScores[s] = 0; counts[s] = 0; });
-
-					answers.forEach(ans => {
-						const q = allQuestions.find(item => item.id === ans.id);
-						if (q && q.scale && rawScores.hasOwnProperty(q.scale)) {
-							rawScores[q.scale] += parseInt(ans.value);
-							counts[q.scale] += 1;
-						}
-					});
-
-					const finalScores = {};
-					// 处理动机模块 (1-5 平均分)
-					llosScales.forEach(s => {
-						finalScores[s] = counts[s] > 0 ? (rawScores[s] / counts[s]).toFixed(2) : "0.00";
-					});
-					// 处理功能模块 (映射至 30 分制，4题x5分x1.5 = 30分)
-					jungScales.forEach(s => {
-						finalScores[s] = counts[s] > 0 ? (rawScores[s] * 1.5).toFixed(1) : "0.0";
-					});
-
-					return finalScores;
-				}
-
-				const scores = calculateResults(userAnswers, questions);
-				const dataScores = SCALES_ORDER.map(label => scores[label]);
-
-				// 渲染显示列表 (Display)
-				const scoreSummaryList = document.getElementById('score-summary-list');
-				SCALES_ORDER.forEach((label) => {
-					const isJung = ['Ne','Ni','Se','Si','Fe','Fi','Te','Ti'].includes(label);
-					const maxVal = isJung ? "30.0" : "5.0";
-					const item = document.createElement('div');
-					item.className = 'score-item';
-					item.innerHTML = `
-						<span class="dimension-name">${label}</span>
-						<span class="dimension-score">${scores[label]} / ${maxVal}</span>
-					`;
-					scoreSummaryList.appendChild(item);
-				});
-
-				// 绘制雷达图
-				const ctx = document.getElementById('radarChart').getContext('2d');
-				new Chart(ctx, {
-					type: 'radar',
-					data: {
-						labels: SCALES_ORDER,
-						datasets: [{
-							label: '倾向程度',
-							data: dataScores,
-							backgroundColor: 'rgba(108, 99, 255, 0.2)',
-							borderColor: '#6C63FF',
-							borderWidth: 2
-						}]
-					},
-					options: {
-						scales: {
-							r: { suggestedMin: 0, suggestedMax: 30, ticks: { stepSize: 5 } }
-						}
-					}
-				});
-
-				// 后端保存
-				fetch('/.netlify/functions/save_data', {
-					method: 'POST',
-					body: JSON.stringify({ username, scores })
-				}).catch(err => console.error('保存失败:', err));
-			};
-		</script>
-	</body>
+            // 4. 发送到后端保存
+            try {
+                const response = await fetch('/.netlify/functions/save_data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, scores })
+                });
+                if (!response.ok) console.error('数据保存失败');
+            } catch (err) {
+                console.error('网络错误，无法保存数据:', err);
+            }
+        };
+    </script>
+</body>
 </html>

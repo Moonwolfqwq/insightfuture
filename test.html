@@ -53,7 +53,7 @@
 
 		let questions = [];
 		let currentIdx = 0;
-		let userAnswers = [];
+		let userAnswers = []; // 这里存储已提交的答案
 
 		const startView = document.getElementById('start-view');
 		const quizView = document.getElementById('quiz-view');
@@ -64,7 +64,7 @@
 		const qPrefix = document.getElementById('question-prefix');
 		const circles = document.querySelectorAll('.circle-wrapper');
 
-		// 1. 点击开始按钮逻辑
+		// 开始测试
 		startBtn.addEventListener('click', () => {
 			const name = usernameInput.value.trim();
 			if (!name) return alert("请输入姓名");
@@ -77,10 +77,11 @@
 			renderQuestion();
 		});
 
-		// 2. 渲染题目函数
+		// 渲染题目
 		function renderQuestion() {
 			const q = questions[currentIdx];
 			
+			// 引导语逻辑
 			if (q.part === 'LLOS') {
 				qPrefix.style.display = "block";
 				qPrefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
@@ -94,16 +95,16 @@
 			// 重置状态
 			circles.forEach(cw => cw.querySelector('.circle').classList.remove('active'));
 			nextBtn.disabled = true;
-			nextBtn.dataset.value = ""; 
+			nextBtn.dataset.value = "";
+
+			// 【新增】回退重新作答逻辑：如果这一题之前做过（回退回来的），恢复之前的选择
+			const previousAnswer = userAnswers[currentIdx];
+			if (previousAnswer) {
+				selectOption(previousAnswer.value);
+			}
 		}
 
-		// 3. 鼠标/点击选择逻辑
-		circles.forEach(cw => {
-			cw.addEventListener('click', () => {
-				selectOption(cw.dataset.val);
-			});
-		});
-
+		// 选择选项
 		function selectOption(val) {
 			circles.forEach(c => {
 				const circle = c.querySelector('.circle');
@@ -114,11 +115,18 @@
 			nextBtn.dataset.value = val;
 		}
 
-		// 4. 下一题逻辑
+		circles.forEach(cw => {
+			cw.addEventListener('click', () => selectOption(cw.dataset.val));
+		});
+
+		// 下一题逻辑
 		function handleNext() {
 			if (nextBtn.disabled) return;
 			
-			userAnswers.push({ id: questions[currentIdx].id, value: nextBtn.dataset.value });
+			// 保存或更新当前题目的答案
+			const answer = { id: questions[currentIdx].id, value: nextBtn.dataset.value };
+			userAnswers[currentIdx] = answer; // 使用索引存储，方便回退修改
+
 			currentIdx++;
 
 			if (currentIdx < questions.length) {
@@ -129,21 +137,33 @@
 			}
 		}
 
+		// 返回上一题逻辑
+		function handleBack() {
+			if (currentIdx > 0) {
+				currentIdx--;
+				renderQuestion();
+			}
+		}
+
 		nextBtn.addEventListener('click', handleNext);
 
-		// 5. 【新增】键盘快捷键监听
+		// 键盘监听 (1-5, Enter, Shift)
 		document.addEventListener('keydown', (e) => {
-			// 如果题目界面没显示，则不触发
 			if (quizView.style.display !== 'block') return;
 
-			// 数字键 1-5 选择
+			// 数字键 1-5
 			if (e.key >= '1' && e.key <= '5') {
 				selectOption(e.key);
 			}
 
-			// Enter 键下一题
+			// Enter 下一题
 			if (e.key === 'Enter') {
 				handleNext();
+			}
+
+			// 【新增】Shift 返回上一题
+			if (e.key === 'Shift') {
+				handleBack();
 			}
 		});
 	</script>

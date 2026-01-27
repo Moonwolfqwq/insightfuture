@@ -5,17 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>能力倾向测试</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f7f6; color: #333; padding: 20px; }
-        .start-box, .quiz-container { max-width: 500px; margin: 50px auto; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1, h2 { color: #6C63FF; }
-        input { width: 80%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        .btn { background: #6C63FF; color: white; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 16px; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            text-align: center; 
+            background-color: #f4f7f6; 
+            color: #333; 
+            padding: 20px; 
+            user-select: none; /* 禁止选中文本，去除输入提示符感 */
+        }
+        
+        /* 1. 框体调大 */
+        .start-box, .quiz-container { 
+            max-width: 800px; 
+            margin: 50px auto; 
+            padding: 60px 40px; 
+            background: white; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+        }
+
+        h1 { color: #6C63FF; }
+        
+        /* 2. 题目字颜色调黑 */
+        h2#question-text { 
+            color: #000; 
+            font-size: 1.6em; 
+            margin: 30px 0;
+            line-height: 1.4;
+        }
+
+        input { width: 60%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        
+        /* 按钮基础样式 */
+        .btn { 
+            background: #6C63FF; 
+            color: white; 
+            border: none; 
+            padding: 12px 40px; 
+            border-radius: 30px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #5a52d5; }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
-        .progress-bar { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        
+        /* 上一题按钮样式 */
+        .btn-secondary { background: #e0e0e0; color: #666; margin-right: 15px; }
+        .btn-secondary:hover { background: #d0d0d0; }
+
+        .progress-bar { width: 100%; height: 6px; background: #eee; border-radius: 3px; margin-bottom: 40px; overflow: hidden; }
         #progress { width: 0%; height: 100%; background: #6C63FF; transition: width 0.3s; }
-        .circle-wrapper { cursor: pointer; flex: 1; }
-        .circle { width: 30px; height: 30px; border: 2px solid #6C63FF; border-radius: 50%; margin: 0 auto 5px; transition: 0.2s; }
-        .circle.active { background: #6C63FF; }
+
+        .options-container { display: flex; justify-content: space-between; margin: 50px 0; }
+        
+        .circle-wrapper { 
+            cursor: pointer; 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        .circle { width: 34px; height: 34px; border: 2px solid #6C63FF; border-radius: 50%; margin-bottom: 10px; transition: 0.2s; }
+        .circle.active { background: #6C63FF; box-shadow: 0 0 10px rgba(108,99,255,0.4); }
+        .circle-wrapper span { font-size: 14px; color: #666; }
+
+        .button-group { display: flex; justify-content: center; align-items: center; margin-top: 20px; }
+
         #quiz-view { display: none; }
     </style>
 </head>
@@ -32,10 +88,11 @@
     <div id="quiz-view">
         <div class="quiz-container">
             <div class="progress-bar"><div id="progress"></div></div>
-            <div id="question-prefix" style="text-align: left; font-size: 14px; color: #888; font-weight: bold; min-height: 20px;"></div>
+            <div id="question-prefix" style="text-align: left; font-size: 14px; color: #999; font-weight: bold; min-height: 20px; margin-bottom: 10px;"></div>
+            
             <h2 id="question-text">加载中...</h2>
 
-            <div class="options-container" style="display: flex; justify-content: space-between; margin: 30px 0;">
+            <div class="options-container">
                 <div class="circle-wrapper" data-val="1"><div class="circle"></div><span>非常不符</span></div>
                 <div class="circle-wrapper" data-val="2"><div class="circle"></div><span>不符</span></div>
                 <div class="circle-wrapper" data-val="3"><div class="circle"></div><span>中立</span></div>
@@ -43,9 +100,12 @@
                 <div class="circle-wrapper" data-val="5"><div class="circle"></div><span>非常符合</span></div>
             </div>
 
-            <button id="next-btn" class="btn" disabled>下一题 (Enter)</button>
-            <p style="font-size: 12px; color: #aaa; margin-top: 15px;">快捷键: 1-5 选择 | Enter 下一步 | Shift 返回</p>
-        </div>
+            <div class="button-group">
+                <button id="back-btn" class="btn btn-secondary" style="display: none;">上一题</button>
+                <button id="next-btn" class="btn" disabled>下一题</button>
+            </div>
+            
+            </div>
     </div>
 
     <script type="module">
@@ -60,6 +120,7 @@
         const usernameInput = document.getElementById('username-input');
         const startBtn = document.getElementById('start-btn');
         const nextBtn = document.getElementById('next-btn');
+        const backBtn = document.getElementById('back-btn');
         const circles = document.querySelectorAll('.circle-wrapper');
 
         startBtn.addEventListener('click', () => {
@@ -75,28 +136,40 @@
         function renderQuestion() {
             const q = questions[currentIdx];
             const prefix = document.getElementById('question-prefix');
+            
+            // 显示/隐藏前缀
             if (q.part === 'LLOS') {
                 prefix.style.display = "block";
                 prefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
             } else {
                 prefix.style.display = "none";
             }
+
             document.getElementById('question-text').innerText = q.text;
             document.getElementById('progress').style.width = ((currentIdx / questions.length) * 100) + '%';
             
+            // 上一题按钮显示控制
+            backBtn.style.display = currentIdx > 0 ? "inline-block" : "none";
+            
             resetOptions();
-            if (userAnswers[currentIdx]) selectOption(userAnswers[currentIdx].value);
+            
+            // 如果这题已经答过，恢复勾选状态
+            if (userAnswers[currentIdx]) {
+                selectOption(userAnswers[currentIdx].value);
+            }
         }
 
         function resetOptions() {
             circles.forEach(c => c.querySelector('.circle').classList.remove('active'));
             nextBtn.disabled = true;
+            nextBtn.innerText = currentIdx === questions.length - 1 ? "提交测试" : "下一题";
         }
 
         function selectOption(val) {
-            resetOptions();
             circles.forEach(c => {
-                if (c.dataset.val == val) c.querySelector('.circle').classList.add('active');
+                const circle = c.querySelector('.circle');
+                circle.classList.remove('active');
+                if (c.dataset.val == val) circle.classList.add('active');
             });
             nextBtn.disabled = false;
             nextBtn.dataset.value = val;
@@ -106,24 +179,32 @@
 
         function handleNext() {
             if (nextBtn.disabled) return;
+            // 保存答案
             userAnswers[currentIdx] = { id: questions[currentIdx].id, value: nextBtn.dataset.value };
-            currentIdx++;
-            if (currentIdx < questions.length) renderQuestion();
-            else {
+            
+            if (currentIdx < questions.length - 1) {
+                currentIdx++;
+                renderQuestion();
+            } else {
                 localStorage.setItem('userAnswers', JSON.stringify(userAnswers));
                 window.location.href = 'results.html';
             }
         }
 
+        function handleBack() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                renderQuestion();
+            }
+        }
+
         nextBtn.addEventListener('click', handleNext);
+        backBtn.addEventListener('click', handleBack);
 
         document.addEventListener('keydown', (e) => {
             if (quizView.style.display !== 'block') return;
             if (e.key >= '1' && e.key <= '5') selectOption(e.key);
             if (e.key === 'Enter') handleNext();
-            if (e.key === 'Shift') {
-                if (currentIdx > 0) { currentIdx--; renderQuestion(); }
-            }
         });
     </script>
 </body>

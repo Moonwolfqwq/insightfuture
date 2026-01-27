@@ -5,74 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>能力倾向测试</title>
     <style>
+        /* 基础重置：禁止选中文本，移除输入提示符感 */
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             text-align: center; 
             background-color: #f4f7f6; 
             color: #333; 
-            padding: 20px; 
-            user-select: none; /* 禁止选中文本，去除输入提示符感 */
+            padding: 20px;
         }
         
-        /* 1. 框体调大 */
+        /* 框体大一些 */
         .start-box, .quiz-container { 
-            max-width: 800px; 
+            max-width: 850px; 
             margin: 50px auto; 
-            padding: 60px 40px; 
+            padding: 60px 50px; 
             background: white; 
-            border-radius: 16px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+            border-radius: 20px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06); 
         }
 
-        h1 { color: #6C63FF; }
-        
-        /* 2. 题目字颜色调黑 */
+        h1 { color: #6C63FF; margin-bottom: 30px; }
+
+        /* 题目字设为黑色 */
         h2#question-text { 
             color: #000; 
-            font-size: 1.6em; 
-            margin: 30px 0;
-            line-height: 1.4;
+            font-size: 1.8em; 
+            margin: 40px 0;
+            line-height: 1.5;
+            font-weight: 600;
         }
 
-        input { width: 60%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        
-        /* 按钮基础样式 */
+        /* 输入框允许选中，否则没法打字 */
+        input#username-input { 
+            user-select: text;
+            -webkit-user-select: text;
+            width: 60%; 
+            padding: 15px; 
+            margin: 20px 0; 
+            border: 2px solid #eee; 
+            border-radius: 12px; 
+            font-size: 18px;
+            outline: none;
+        }
+
         .btn { 
             background: #6C63FF; 
             color: white; 
             border: none; 
-            padding: 12px 40px; 
-            border-radius: 30px; 
+            padding: 14px 45px; 
+            border-radius: 35px; 
             cursor: pointer; 
-            font-size: 16px; 
-            transition: all 0.2s;
+            font-size: 18px; 
+            transition: all 0.2s ease;
         }
-        .btn:hover { background: #5a52d5; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn:hover { background: #5a52d5; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
         
-        /* 上一题按钮样式 */
-        .btn-secondary { background: #e0e0e0; color: #666; margin-right: 15px; }
-        .btn-secondary:hover { background: #d0d0d0; }
+        /* 上一题按钮 */
+        .btn-secondary { background: #e8e8ed; color: #555; margin-right: 20px; }
+        .btn-secondary:hover { background: #ddd; }
 
-        .progress-bar { width: 100%; height: 6px; background: #eee; border-radius: 3px; margin-bottom: 40px; overflow: hidden; }
-        #progress { width: 0%; height: 100%; background: #6C63FF; transition: width 0.3s; }
+        .progress-bar { width: 100%; height: 8px; background: #f0f0f0; border-radius: 4px; margin-bottom: 50px; overflow: hidden; }
+        #progress { width: 0%; height: 100%; background: #6C63FF; transition: width 0.4s ease; }
 
-        .options-container { display: flex; justify-content: space-between; margin: 50px 0; }
+        .options-container { display: flex; justify-content: space-between; margin: 60px 0; }
         
         .circle-wrapper { 
             cursor: pointer; 
             flex: 1; 
             display: flex; 
             flex-direction: column; 
-            align-items: center; 
+            align-items: center;
+            transition: transform 0.2s;
         }
-        .circle { width: 34px; height: 34px; border: 2px solid #6C63FF; border-radius: 50%; margin-bottom: 10px; transition: 0.2s; }
-        .circle.active { background: #6C63FF; box-shadow: 0 0 10px rgba(108,99,255,0.4); }
-        .circle-wrapper span { font-size: 14px; color: #666; }
+        .circle-wrapper:hover { transform: translateY(-2px); }
+        
+        .circle { width: 38px; height: 38px; border: 2.5px solid #6C63FF; border-radius: 50%; margin-bottom: 12px; transition: 0.2s; background: white; }
+        .circle.active { background: #6C63FF; box-shadow: 0 0 15px rgba(108,99,255,0.4); }
+        .circle-wrapper span { font-size: 15px; color: #444; font-weight: 500; }
 
-        .button-group { display: flex; justify-content: center; align-items: center; margin-top: 20px; }
+        .button-group { display: flex; justify-content: center; align-items: center; margin-top: 30px; }
 
         #quiz-view { display: none; }
+        #question-prefix { text-align: left; font-size: 15px; color: #999; font-weight: bold; min-height: 24px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -80,7 +101,7 @@
     <div id="start-view" class="start-box">
         <h1>欢迎参加测试</h1>
         <p>请输入您的姓名以开始</p>
-        <input type="text" id="username-input" placeholder="您的姓名">
+        <input type="text" id="username-input" placeholder="输入姓名..." spellcheck="false">
         <br>
         <button id="start-btn" class="btn">进入测试</button>
     </div>
@@ -88,7 +109,7 @@
     <div id="quiz-view">
         <div class="quiz-container">
             <div class="progress-bar"><div id="progress"></div></div>
-            <div id="question-prefix" style="text-align: left; font-size: 14px; color: #999; font-weight: bold; min-height: 20px; margin-bottom: 10px;"></div>
+            <div id="question-prefix"></div>
             
             <h2 id="question-text">加载中...</h2>
 
@@ -104,8 +125,7 @@
                 <button id="back-btn" class="btn btn-secondary" style="display: none;">上一题</button>
                 <button id="next-btn" class="btn" disabled>下一题</button>
             </div>
-            
-            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -137,7 +157,6 @@
             const q = questions[currentIdx];
             const prefix = document.getElementById('question-prefix');
             
-            // 显示/隐藏前缀
             if (q.part === 'LLOS') {
                 prefix.style.display = "block";
                 prefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
@@ -148,12 +167,11 @@
             document.getElementById('question-text').innerText = q.text;
             document.getElementById('progress').style.width = ((currentIdx / questions.length) * 100) + '%';
             
-            // 上一题按钮显示控制
+            // 按钮逻辑
             backBtn.style.display = currentIdx > 0 ? "inline-block" : "none";
+            nextBtn.innerText = currentIdx === questions.length - 1 ? "完成提交" : "下一题";
             
             resetOptions();
-            
-            // 如果这题已经答过，恢复勾选状态
             if (userAnswers[currentIdx]) {
                 selectOption(userAnswers[currentIdx].value);
             }
@@ -162,7 +180,6 @@
         function resetOptions() {
             circles.forEach(c => c.querySelector('.circle').classList.remove('active'));
             nextBtn.disabled = true;
-            nextBtn.innerText = currentIdx === questions.length - 1 ? "提交测试" : "下一题";
         }
 
         function selectOption(val) {
@@ -179,7 +196,6 @@
 
         function handleNext() {
             if (nextBtn.disabled) return;
-            // 保存答案
             userAnswers[currentIdx] = { id: questions[currentIdx].id, value: nextBtn.dataset.value };
             
             if (currentIdx < questions.length - 1) {
@@ -201,10 +217,18 @@
         nextBtn.addEventListener('click', handleNext);
         backBtn.addEventListener('click', handleBack);
 
+        // 键盘监听逻辑
         document.addEventListener('keydown', (e) => {
             if (quizView.style.display !== 'block') return;
+
+            // 1-5 选择
             if (e.key >= '1' && e.key <= '5') selectOption(e.key);
+            
+            // Enter 下一步
             if (e.key === 'Enter') handleNext();
+            
+            // Shift 返回上一题 (关键快捷键)
+            if (e.key === 'Shift') handleBack();
         });
     </script>
 </body>

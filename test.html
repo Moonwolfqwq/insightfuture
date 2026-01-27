@@ -2,13 +2,15 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>能力倾向测试</title>
     <style>
         /* 禁止选中文本，移除输入提示符感 */
         * {
             user-select: none;
             -webkit-user-select: none;
+            /* 1. 解决移动端点按闪烁方块问题 */
+            -webkit-tap-highlight-color: transparent; 
         }
 
         body { 
@@ -16,13 +18,15 @@
             text-align: center; 
             background-color: #f4f7f6; 
             color: #333; 
-            padding: 20px;
+            padding: 15px;
+            /* 防止移动端橡皮筋回弹干扰体验 */
+            overflow-x: hidden;
         }
         
         .start-box, .quiz-container { 
             max-width: 850px; 
-            margin: 50px auto; 
-            padding: 60px 50px; 
+            margin: 20px auto; 
+            padding: 40px 25px; 
             background: white; 
             border-radius: 20px; 
             box-shadow: 0 10px 40px rgba(0,0,0,0.06); 
@@ -33,7 +37,7 @@
         /* 题目字颜色调黑 */
         h2#question-text { 
             color: #000; 
-            font-size: 1.8em; 
+            font-size: 1.6em; 
             margin: 20px 0 40px 0;
             line-height: 1.5;
             font-weight: 600;
@@ -42,53 +46,71 @@
         input#username-input { 
             user-select: text;
             -webkit-user-select: text;
-            width: 60%; 
+            width: 80%; 
             padding: 15px; 
             margin: 20px 0; 
             border: 2px solid #eee; 
             border-radius: 12px; 
             font-size: 18px;
             outline: none;
+            /* 允许移动端默认点击效果以便确认输入框选中 */
+            -webkit-tap-highlight-color: rgba(0,0,0,0.05);
         }
 
+        /* 按钮基础样式 */
         .btn { 
             background: #6C63FF; 
             color: white; 
             border: none; 
-            padding: 14px 45px; 
+            padding: 14px 40px; 
             border-radius: 35px; 
             cursor: pointer; 
             font-size: 18px; 
-            transition: all 0.2s ease;
+            transition: background 0.2s;
+            /* 解决移动端卡在点住状态：移除 hover 干扰 */
         }
-        .btn:hover { background: #5a52d5; transform: translateY(-1px); }
+        
+        /* 仅在非触摸设备上显示 hover 效果 */
+        @media (hover: hover) {
+            .btn:hover { background: #5a52d5; }
+        }
+
+        /* 2. 解决点住不放的效果：改为 active 瞬时反馈 */
+        .btn:active { 
+            background: #4a42b5 !important; 
+            transform: scale(0.98);
+        }
+
         .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
         
-        .btn-secondary { background: #e8e8ed; color: #555; margin-right: 20px; }
+        .btn-secondary { background: #e8e8ed; color: #555; margin-right: 15px; }
 
-        /* 进度条上方题号 */
         #question-counter { 
             text-align: left; 
-            font-size: 16px; 
+            font-size: 14px; 
             color: #6C63FF; 
             font-weight: bold; 
             margin-bottom: 8px; 
         }
 
-        .progress-bar { width: 100%; height: 8px; background: #f0f0f0; border-radius: 4px; margin-bottom: 50px; overflow: hidden; }
+        .progress-bar { width: 100%; height: 6px; background: #f0f0f0; border-radius: 3px; margin-bottom: 40px; overflow: hidden; }
         #progress { width: 0%; height: 100%; background: #6C63FF; transition: width 0.4s ease; }
 
-        /* 前缀文字（原来的位置） */
         #question-prefix { 
             text-align: center; 
-            font-size: 15px; 
+            font-size: 14px; 
             color: #999; 
             font-weight: bold; 
-            min-height: 24px; 
+            min-height: 20px; 
             margin-bottom: 10px; 
         }
 
-        .options-container { display: flex; justify-content: space-between; margin: 60px 0; }
+        /* 选项区域 */
+        .options-container { 
+            display: flex; 
+            justify-content: space-between; 
+            margin: 40px 0; 
+        }
         
         .circle-wrapper { 
             cursor: pointer; 
@@ -97,13 +119,36 @@
             flex-direction: column; 
             align-items: center;
         }
-        .circle { width: 38px; height: 38px; border: 2.5px solid #6C63FF; border-radius: 50%; margin-bottom: 12px; transition: 0.2s; background: white; }
-        .circle.active { background: #6C63FF; box-shadow: 0 0 15px rgba(108,99,255,0.4); }
-        .circle-wrapper span { font-size: 15px; color: #444; font-weight: 500; }
 
-        .button-group { display: flex; justify-content: center; align-items: center; margin-top: 30px; }
+        .circle { 
+            width: 32px; 
+            height: 32px; 
+            border: 2px solid #6C63FF; 
+            border-radius: 50%; 
+            margin-bottom: 10px; 
+            transition: 0.2s; 
+            background: white; 
+        }
+
+        /* 选中状态 */
+        .circle.active { 
+            background: #6C63FF; 
+            box-shadow: 0 0 12px rgba(108,99,255,0.3); 
+        }
+
+        .circle-wrapper span { font-size: 12px; color: #666; font-weight: 500; }
+
+        .button-group { display: flex; justify-content: center; align-items: center; margin-top: 20px; }
 
         #quiz-view { display: none; }
+
+        /* 移动端适配调优 */
+        @media (max-width: 480px) {
+            h2#question-text { font-size: 1.3em; }
+            .circle { width: 28px; height: 28px; }
+            .circle-wrapper span { font-size: 11px; scale: 0.9; }
+            .btn { padding: 12px 30px; font-size: 16px; }
+        }
     </style>
 </head>
 <body>
@@ -120,7 +165,6 @@
         <div class="quiz-container">
             <div id="question-counter"></div>
             <div class="progress-bar"><div id="progress"></div></div>
-            
             <div id="question-prefix"></div>
             <h2 id="question-text">加载中...</h2>
 
@@ -168,16 +212,12 @@
 
         function renderQuestion() {
             const q = questions[currentIdx];
-            
-            // 更新左上角题号
             counter.innerText = `${currentIdx + 1} / ${questions.length}`;
             
-            // 更新中间位置的前缀引导语
             if (q.part === 'LLOS') {
                 prefix.style.visibility = "visible";
                 prefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
             } else {
-                // 使用 visibility 占据空间，防止切换题目时布局抖动
                 prefix.style.visibility = "hidden";
             }
 
@@ -208,7 +248,11 @@
             nextBtn.dataset.value = val;
         }
 
-        circles.forEach(cw => cw.addEventListener('click', () => selectOption(cw.dataset.val)));
+        circles.forEach(cw => cw.addEventListener('click', (e) => {
+            // 防止移动端重复触发
+            e.preventDefault();
+            selectOption(cw.dataset.val);
+        }));
 
         function handleNext() {
             if (nextBtn.disabled) return;

@@ -1,494 +1,126 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>能力倾向测试</title>
-		
-		<style>
-			/* --- 全局和问卷基础样式 --- */
-			body { 
-				font-family: Arial, sans-serif; 
-				text-align: center; 
-				background-color: #f4f7f6; 
-				color: #333;
-				padding: 20px;
-				/* 消除移动端点击时的瞬时高亮效果 */
-				-webkit-tap-highlight-color: transparent; 
-			}
-			
-			/* --- 用户名输入界面样式 --- */
-			.start-box {
-				max-width: 450px;
-				margin: 100px auto;
-				padding: 40px;
-				background-color: #ffffff;
-				border-radius: 12px;
-				box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-			}
-			
-			.start-box h1 {
-				color: #6C63FF;
-				font-size: 2em;
-				margin-bottom: 20px;
-			}
-			
-			.start-box p {
-				color: #777;
-				margin-bottom: 30px;
-			}
-			
-			.start-box input[type="text"] {
-				width: 80%;
-				padding: 10px;
-				margin-bottom: 20px;
-				border: 1px solid #ccc;
-				border-radius: 6px;
-				font-size: 1.1em;
-				text-align: center;
-			}
-			
-			#start-button {
-				background-color: #6C63FF;
-				color: white;
-				padding: 12px 30px;
-				border: none;
-				border-radius: 25px;
-				font-size: 1.1em;
-				cursor: pointer;
-				transition: background-color 0.3s;
-			}
-			
-			#start-button:hover {
-				background-color: #574BDB;
-			}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>能力倾向测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f7f6; color: #333; padding: 20px; }
+        .start-box, .quiz-container { max-width: 500px; margin: 50px auto; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1, h2 { color: #6C63FF; }
+        input { width: 80%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .btn { background: #6C63FF; color: white; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 16px; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .progress-bar { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        #progress { width: 0%; height: 100%; background: #6C63FF; transition: width 0.3s; }
+        .circle-wrapper { cursor: pointer; flex: 1; }
+        .circle { width: 30px; height: 30px; border: 2px solid #6C63FF; border-radius: 50%; margin: 0 auto 5px; transition: 0.2s; }
+        .circle.active { background: #6C63FF; }
+        .options-container span { font-size: 12px; color: #777; }
+        #quiz-view { display: none; } /* 初始隐藏题目页 */
+    </style>
+</head>
+<body>
 
-			/* --- 问卷基础样式 --- */
-			.question-box {
-				max-width: 700px;
-				margin: 50px auto;
-				padding: 40px;
-				background-color: #ffffff;
-				border-radius: 12px;
-				box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-				/* 禁止问卷框内的所有文本和元素被选中，消除光标/选区 */
-				user-select: none; 
-			}
-			
-			h3 {
-				font-size: 1.8em;
-				margin-bottom: 40px;
-				color: #4A4A4A;
-			}
-			
-			/* --- 进度条样式 --- */
-			.progress-bar {
-				width: 100%;
-				height: 8px;
-				background-color: #e0e0e0;
-				border-radius: 4px;
-				margin-bottom: 30px;
-			}
-			
-			.progress-bar-fill {
-				height: 100%;
-				width: 0%; 
-				background-color: #6C63FF;
-				border-radius: 4px;
-				transition: width 0.5s ease;
-			}
-			
-			/* --- 圆圈选项样式 --- */
-			.options-container {
-				display: flex;
-				flex-direction: row; 
-				justify-content: space-between; 
-				align-items: center;
-				padding: 0 20px;
-				margin: 40px auto;
-			}
-			
-			.option-circle {
-				width: 40px; 
-				height: 40px;
-				border-radius: 50%; 
-				border: 3px solid #ccc;
-				background-color: #fff;
-				cursor: pointer;
-				transition: all 0.3s ease;
-				user-select: none; 
-				outline: none;
-			}
+    <div id="start-view" class="start-box">
+        <h1>欢迎参加测试</h1>
+        <p>请输入您的姓名以开始</p>
+        <input type="text" id="username-input" placeholder="您的姓名">
+        <br>
+        <button id="start-btn" class="btn">进入测试</button>
+    </div>
 
-			/* 鼠标悬停效果 */
-			.option-circle:hover {
-				border-color: #6C63FF; 
-				transform: scale(1.1);
-			}
-			
-			/* 选中状态 (点击后) */
-			.option-circle.active {
-				border-color: #6C63FF;
-				background-color: #6C63FF;
-				box-shadow: 0 0 0 5px rgba(108, 99, 255, 0.3);
-				transform: scale(1.1);
-			}
+    <div id="quiz-view">
+        <div class="quiz-container">
+            <div class="progress-bar"><div id="progress"></div></div>
+            <div id="question-prefix" style="text-align: left; font-size: 14px; color: #888; font-weight: bold; min-height: 20px;"></div>
+            <h2 id="question-text">正在加载题目...</h2>
 
-			/* 消除圆圈被按下时的闪烁 */
-			.option-circle:active {
-				transform: scale(1.05); 
-			}
-			
-			/* --- 选项文字描述定位 --- */
-			.label-positions-container {
-				display: flex;
-				justify-content: space-between; 
-				width: 100%; 
-				padding: 0 20px;
-				margin-top: 10px;
-				font-size: 0.9em;
-				color: #777;
-			}
+            <div class="options-container" style="display: flex; justify-content: space-between; margin: 30px 0;">
+                <div class="circle-wrapper" data-val="1"><div class="circle"></div><span>非常不符</span></div>
+                <div class="circle-wrapper" data-val="2"><div class="circle"></div><span>不符</span></div>
+                <div class="circle-wrapper" data-val="3"><div class="circle"></div><span>中立</span></div>
+                <div class="circle-wrapper" data-val="4"><div class="circle"></div><span>符合</span></div>
+                <div class="circle-wrapper" data-val="5"><div class="circle"></div><span>非常符合</span></div>
+            </div>
 
-			.label-positions-container span {
-				text-align: center;
-				flex-basis: 33.33%; 
-			}
+            <button id="next-btn" class="btn" disabled>下一题</button>
+        </div>
+    </div>
 
-			.label-positions-container .label-left {
-				text-align: left;
-				transform: translateX(-13px); 
-			}
+    <script type="module">
+        import { getQuestions } from './questions.js';
 
-			.label-positions-container .label-center {
-				transform: translateX(-20px); 
-			}
+        let questions = [];
+        let currentIdx = 0;
+        let userAnswers = [];
 
-			.label-positions-container .label-right {
-				text-align: right;
-				transform: translateX(-33px); 
-			}
-			
-			/* --- 按钮样式 --- */
-			#next-button {
-				background-color: #6C63FF;
-				color: white;
-				padding: 12px 30px;
-				border: none;
-				border-radius: 25px;
-				font-size: 1.1em;
-				cursor: pointer;
-				transition: background-color 0.1s ease;
-				margin-top: 50px;
-			}
-			
-			#next-button:hover {
-				background-color: #574BDB;
-			}
-			
-			#next-button:active {
-				background-color: #574BDB; 
-				transform: translateY(1px);
-			}
-		</style>
-	</head>
-	<body>
+        const startView = document.getElementById('start-view');
+        const quizView = document.getElementById('quiz-view');
+        const usernameInput = document.getElementById('username-input');
+        const startBtn = document.getElementById('start-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const qText = document.getElementById('question-text');
+        const qPrefix = document.getElementById('question-prefix');
+        const circles = document.querySelectorAll('.circle-wrapper');
 
-		<div id="start-view" class="start-box">
-			<h1>欢迎参加能力倾向测试</h1>
-			<p>请留下您的名称，然后点击开始。</p>
-			
-			<input type="text" id="username-input" placeholder="请输入您的名称" maxlength="15">
-			
-			<button id="start-button">开始测试</button>
-		</div>
+        // 点击开始按钮
+        startBtn.addEventListener('click', () => {
+            const name = usernameInput.value.trim();
+            if (!name) return alert("请输入姓名");
+            localStorage.setItem('quizUsername', name);
+            
+            // 切换视图
+            startView.style.display = 'none';
+            quizView.style.display = 'block';
+            
+            // 初始化题目
+            questions = getQuestions();
+            renderQuestion();
+        });
 
-		<div id="quiz-view" class="question-box" style="display: none;">
-			<div id="progress-bar-container" class="progress-bar">
-				<div id="progress-fill" class="progress-bar-fill" style="width: 0%;"></div> 
-			</div>
-			
-			<p id="question-counter">第 1 题 / 共 50 题</p> 
-			
-			<h3 id="question-text">问题内容将被加载到这里。</h3> 
-			
-			<div id="options-container" class="options-container">
-				<div class="option-circle" data-value="-2" title="完全不同意"></div>
-				<div class="option-circle" data-value="-1" title="有点不同意"></div>
-				<div class="option-circle" data-value="0" title="中立"></div>
-				<div class="option-circle" data-value="1" title="有点同意"></div>
-				<div class="option-circle" data-value="2" title="完全同意"></div>
-			</div>
-			
-			<div class="label-positions-container">
-				<span class="label-left">完全不同意</span>
-				<span class="label-center">中立</span>
-				<span class="label-right">完全同意</span>
-			</div>
-			
-			<button id="next-button">下一题</button>
-		</div>
+        // 渲染题目
+        function renderQuestion() {
+            const q = questions[currentIdx];
+            
+            // 处理引导语逻辑
+            if (q.part === 'LLOS') {
+                qPrefix.style.display = "block";
+                qPrefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
+            } else {
+                qPrefix.style.display = "none";
+            }
+            
+            qText.innerText = q.text;
+            document.getElementById('progress').style.width = ((currentIdx / questions.length) * 100) + '%';
+            
+            // 重置选项
+            circles.forEach(cw => cw.querySelector('.circle').classList.remove('active'));
+            nextBtn.disabled = true;
+        }
 
-		<script type="module">
-			import { getQuestions } from './questions.js';
+        // 选择选项
+        circles.forEach(cw => {
+            cw.addEventListener('click', () => {
+                circles.forEach(c => c.querySelector('.circle').classList.remove('active'));
+                cw.querySelector('.circle').classList.add('active');
+                nextBtn.disabled = false;
+                nextBtn.dataset.value = cw.dataset.val;
+            });
+        });
 
-			let questions = [];
-			let currentQuestionIndex = 0;
-			let userAnswers = [];
+        // 下一题
+        nextBtn.addEventListener('click', () => {
+            userAnswers.push({ id: questions[currentIdx].id, value: nextBtn.dataset.value });
+            currentIdx++;
 
-			// 初始化应用
-			function initApp() {
-				questions = getQuestions(); // 每次刷新页面都会重新打乱
-				renderQuestion(0);
-			}
-
-			function renderQuestion(index) {
-				const q = questions[index];
-				const prefixElement = document.getElementById('question-prefix');
-				const textElement = document.getElementById('question-text');
-
-				// 逻辑：处理引导语
-				if (q.part === 'LLOS') {
-					prefixElement.style.display = "block";
-					if (q.scale === 'Amotivation') {
-						prefixElement.innerText = "关于学习英语，我认为：";
-					} else {
-						prefixElement.innerText = "我学习英语的原因是：";
-					}
-				} else {
-					prefixElement.style.display = "none";
-				}
-
-				textElement.innerText = q.text;
-
-				// 重置选项状态
-				circles.forEach(c => c.classList.remove('active'));
-				nextButton.disabled = true;
-
-				// 更新进度
-				const progress = ((index + 1) / questions.length) * 100;
-				document.getElementById('progress').style.width = progress + '%';
-				
-				// 如果该题已做过，恢复状态
-				const existing = userAnswers.find(a => a.id === q.id);
-				if (existing) {
-					const target = circles[existing.value - 1];
-					if (target) {
-						target.classList.add('active');
-						nextButton.disabled = false;
-					}
-				}
-			}
-
-			// 监听选项点击 (5-Likert)
-			document.querySelectorAll('.circle').forEach(circle => {
-				circle.addEventListener('click', function() {
-					document.querySelectorAll('.circle').forEach(c => c.classList.remove('active'));
-					this.classList.add('active');
-					document.getElementById('next-btn').disabled = false;
-				});
-			});
-
-			// 计分逻辑：计算 16 个标准化分数 (0.0 - 10.0)
-			function calculateScores() {
-				let results = { ...SCALES_TEMPLATE }; 
-
-				// Helper 函数：计算最终分数 (处理反向计分)
-				const getFinalScore = (direction, rawScore) => {
-					if (direction === -1) {
-						return -rawScore;
-					}
-					return rawScore; 
-				};
-
-				// 累加原始分数
-				userAnswers.forEach(answer => {
-					const question = questions.find(q => q.id === answer.id);
-					const score = answer.value; 
-
-					if (!question || question.type === 'filler') {
-						return;
-					}
-
-					// 荣格八维功能计分
-					if (question.func_scale && question.func_direction !== 0) {
-						const finalScore = getFinalScore(question.func_direction, score);
-						results[question.func_scale] += finalScore;
-					}
-
-					// 人格可发展领域计分
-					if (question.dev_scale && question.dev_direction !== 0) {
-						const finalScore = getFinalScore(question.dev_direction, score);
-						results[question.dev_scale] += finalScore;
-					}
-				});
-				
-				// 标准化分数
-				let finalNormalizedScores = {};
-				
-				SCALES_ORDER.forEach(scaleName => {
-					const rawScore = results[scaleName];
-					
-					const assumedQuestionsPerScale = 8; 
-					const maxPossibleRawScore = assumedQuestionsPerScale * MAX_RAW_SCORE_PER_QUESTION;
-
-					// 标准化公式: 将 [-Max, Max] 范围映射到 [0.0, 10.0]
-					const numerator = rawScore + maxPossibleRawScore;
-					const denominator = 2 * maxPossibleRawScore; 
-
-					const normalizedScore = (numerator / denominator) * 10;
-					finalNormalizedScores[scaleName] = parseFloat(normalizedScore.toFixed(1));
-				});
-				
-				return finalNormalizedScores; 
-			}
-
-			// 发送数据到 Netlify Function
-			async function sendDataToServer(username, finalScores) {
-				const dataToSend = {
-					username: username,
-					scores: finalScores 
-				};
-				
-				try {
-					const response = await fetch(BACKEND_SAVE_URL, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(dataToSend),
-					});
-
-					if (!response.ok) {
-						const errorText = await response.text(); 
-						console.error('Backend save failed:', errorText);
-						return false;
-					}
-					console.log('Results successfully saved to Google Sheets.');
-					return true;
-				} catch (error) {
-					console.error('Network or Function Error:', error);
-					return false;
-				}
-			}
-
-			// 显示结果（并发送数据）
-			async function showResults() {
-				const finalScores = calculateScores(); 
-
-				localStorage.setItem('quizResults', JSON.stringify(finalScores)); 
-				
-				nextButton.disabled = true; 
-				nextButton.textContent = '正在提交...';
-
-				const saveSuccess = await sendDataToServer(username, finalScores);
-				
-				if (saveSuccess) {
-					window.location.href = 'results.html';
-				} else {
-					alert('数据保存失败。将跳转到结果页查看本地结果。');
-					nextButton.disabled = false;
-					nextButton.textContent = '下一题 / 查看结果';
-					setTimeout(() => {
-						window.location.href = 'results.html'; 
-					}, 500);
-				}
-			}
-
-			// 切换视图并渲染第一个问题
-			startButton.addEventListener('click', startQuiz);
-			usernameInput.addEventListener('keydown', function(event) {
-				if (event.key === 'Enter') {
-					event.preventDefault(); 
-					startQuiz();
-				}
-			});
-
-			// 答案选择
-			circles.forEach((circle) => {
-				circle.addEventListener('click', function() {
-					circles.forEach(c => c.classList.remove('active'));
-					circle.classList.add('active');
-					nextButton.disabled = false;
-				});
-			});
-
-			// 保存答案并前进
-			nextButton.addEventListener('click', function() {
-				const selectedCircle = document.querySelector('.option-circle.active');
-				if (!selectedCircle) {
-					alert('请先选择一个选项！');
-					return;
-				}
-
-				const score = parseInt(selectedCircle.getAttribute('data-value'));
-				const questionId = questions[currentQuestionIndex].id;
-
-				const existingIndex = userAnswers.findIndex(a => a.id === questionId);
-				if (existingIndex !== -1) {
-					userAnswers[existingIndex].value = score;
-				} else {
-					userAnswers.push({ id: questionId, value: score });
-				}
-
-				currentQuestionIndex++;
-
-				if (currentQuestionIndex < questions.length) {
-					renderQuestion(currentQuestionIndex);
-				} else {
-					showResults(); 
-				}
-			});
-
-			// 键盘快捷键监听
-			document.addEventListener('keydown', function(event) {
-				if (quizView.style.display !== 'none') {
-					const key = event.key;
-
-					if (key === 'Enter') {
-						event.preventDefault(); 
-						nextButton.click();
-					} else {
-						const selectedIndex = parseInt(key);
-						if (selectedIndex >= 1 && selectedIndex <= 5) {
-							event.preventDefault(); 
-							const targetCircle = circles[selectedIndex - 1];
-							if (targetCircle) {
-								circles.forEach(c => c.classList.remove('active'));
-								targetCircle.classList.add('active');
-								nextButton.disabled = false;
-							}
-						}
-					}
-				}
-			});
-
-			// 首次加载时检查状态
-			function initApp() {
-				const storedUsername = localStorage.getItem('quizUsername');
-				if (storedUsername) {
-					username = storedUsername; 
-					usernameInput.value = storedUsername;
-				}
-			}
-
-			document.addEventListener('DOMContentLoaded', initApp);
-		</script>
-		
-		<div id="quiz-view">
-			<div class="quiz-container">
-				<div id="question-prefix" style="text-align: left; font-size: 14px; color: #888; font-weight: bold; min-height: 20px;"></div>
-				
-				<h2 id="question-text">加载中...</h2>
-
-				<div class="options-container" style="display: flex; justify-content: space-between; margin: 30px 0;">
-					<div class="circle-wrapper"><div class="circle" data-value="1"></div><span>非常不符</span></div>
-					<div class="circle-wrapper"><div class="circle" data-value="2"></div><span>不符</span></div>
-					<div class="circle-wrapper"><div class="circle" data-value="3"></div><span>一般</span></div>
-					<div class="circle-wrapper"><div class="circle" data-value="4"></div><span>符合</span></div>
-					<div class="circle-wrapper"><div class="circle" data-value="5"></div><span>非常符合</span></div>
-				</div>
-				
-				<button id="next-btn" disabled>下一题</button>
-			</div>
-		</div>
-	</body>
+            if (currentIdx < questions.length) {
+                renderQuestion();
+            } else {
+                localStorage.setItem('userAnswers', JSON.stringify(userAnswers));
+                window.location.href = 'results.html';
+            }
+        });
+    </script>
+</body>
 </html>

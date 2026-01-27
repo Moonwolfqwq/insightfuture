@@ -19,7 +19,6 @@
             padding: 20px;
         }
         
-        /* 框体大一些 */
         .start-box, .quiz-container { 
             max-width: 850px; 
             margin: 50px auto; 
@@ -40,7 +39,6 @@
             font-weight: 600;
         }
 
-        /* 输入框允许选中，否则没法打字 */
         input#username-input { 
             user-select: text;
             -webkit-user-select: text;
@@ -64,15 +62,22 @@
             transition: all 0.2s ease;
         }
         .btn:hover { background: #5a52d5; transform: translateY(-1px); }
-        .btn:active { transform: translateY(0); }
         .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
         
-        /* 上一题按钮 */
         .btn-secondary { background: #e8e8ed; color: #555; margin-right: 20px; }
-        .btn-secondary:hover { background: #ddd; }
 
         .progress-bar { width: 100%; height: 8px; background: #f0f0f0; border-radius: 4px; margin-bottom: 50px; overflow: hidden; }
         #progress { width: 0%; height: 100%; background: #6C63FF; transition: width 0.4s ease; }
+
+        /* 题号和前缀容器 */
+        .info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 10px;
+        }
+        #question-counter { font-size: 16px; color: #6C63FF; font-weight: bold; }
+        #question-prefix { font-size: 15px; color: #999; font-weight: bold; }
 
         .options-container { display: flex; justify-content: space-between; margin: 60px 0; }
         
@@ -82,10 +87,7 @@
             display: flex; 
             flex-direction: column; 
             align-items: center;
-            transition: transform 0.2s;
         }
-        .circle-wrapper:hover { transform: translateY(-2px); }
-        
         .circle { width: 38px; height: 38px; border: 2.5px solid #6C63FF; border-radius: 50%; margin-bottom: 12px; transition: 0.2s; background: white; }
         .circle.active { background: #6C63FF; box-shadow: 0 0 15px rgba(108,99,255,0.4); }
         .circle-wrapper span { font-size: 15px; color: #444; font-weight: 500; }
@@ -93,7 +95,6 @@
         .button-group { display: flex; justify-content: center; align-items: center; margin-top: 30px; }
 
         #quiz-view { display: none; }
-        #question-prefix { text-align: left; font-size: 15px; color: #999; font-weight: bold; min-height: 24px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -108,8 +109,11 @@
 
     <div id="quiz-view">
         <div class="quiz-container">
+            <div class="info-header">
+                <div id="question-counter"></div>
+                <div id="question-prefix"></div>
+            </div>
             <div class="progress-bar"><div id="progress"></div></div>
-            <div id="question-prefix"></div>
             
             <h2 id="question-text">加载中...</h2>
 
@@ -141,6 +145,8 @@
         const startBtn = document.getElementById('start-btn');
         const nextBtn = document.getElementById('next-btn');
         const backBtn = document.getElementById('back-btn');
+        const counter = document.getElementById('question-counter');
+        const prefix = document.getElementById('question-prefix');
         const circles = document.querySelectorAll('.circle-wrapper');
 
         startBtn.addEventListener('click', () => {
@@ -155,8 +161,11 @@
 
         function renderQuestion() {
             const q = questions[currentIdx];
-            const prefix = document.getElementById('question-prefix');
             
+            // 更新题号显示 (1 / 69 这种格式)
+            counter.innerText = `${currentIdx + 1} / ${questions.length}`;
+            
+            // 更新前缀
             if (q.part === 'LLOS') {
                 prefix.style.display = "block";
                 prefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
@@ -167,7 +176,6 @@
             document.getElementById('question-text').innerText = q.text;
             document.getElementById('progress').style.width = ((currentIdx / questions.length) * 100) + '%';
             
-            // 按钮逻辑
             backBtn.style.display = currentIdx > 0 ? "inline-block" : "none";
             nextBtn.innerText = currentIdx === questions.length - 1 ? "完成提交" : "下一题";
             
@@ -217,17 +225,10 @@
         nextBtn.addEventListener('click', handleNext);
         backBtn.addEventListener('click', handleBack);
 
-        // 键盘监听逻辑
         document.addEventListener('keydown', (e) => {
             if (quizView.style.display !== 'block') return;
-
-            // 1-5 选择
             if (e.key >= '1' && e.key <= '5') selectOption(e.key);
-            
-            // Enter 下一步
             if (e.key === 'Enter') handleNext();
-            
-            // Shift 返回上一题 (关键快捷键)
             if (e.key === 'Shift') handleBack();
         });
     </script>

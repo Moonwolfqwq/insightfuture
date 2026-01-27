@@ -40,7 +40,10 @@ const llosQuestions = [
     { id: 24, part: 'LLOS', scale: 'External', text: '因为别人要求我这样做。' },
     { id: 25, part: 'LLOS', scale: 'External', text: '为了将来能获得更体面的工作。' },
     { id: 26, part: 'LLOS', scale: 'External', text: '为了在英语考试中取得好成绩。' },
-    { id: 27, part: 'LLOS', scale: 'External', text: '因为英语能帮助我将来获得更高的收入。' },
+    { id: 27, part: 'LLOS', scale: 'External', text: '因为英语能帮助我将来获得更高的收入。' }
+];
+
+const amotivationQuestions = [
     { id: 28, part: 'LLOS', scale: 'Amotivation', text: '学习英语是在浪费时间。' },
     { id: 29, part: 'LLOS', scale: 'Amotivation', text: '学习英语不会改变任何事情。' },
     { id: 30, part: 'LLOS', scale: 'Amotivation', text: '我不明白为什么我必须学习英语。' },
@@ -93,8 +96,12 @@ const fillerQuestions = [
 ];
 
 export function getQuestions() {
-    const part1 = shuffle(llosQuestions);
-    const part2 = shuffle(amotivationQuestions);
-    const part3 = shuffle(jungQuestions);
-    return [...part1, ...part2, ...part3, ...fillerQuestions];
+    // 实现分区打乱逻辑：
+    // LLOS(前5种)内部随机 + 无动机内部随机 + 荣格内部随机 + 填充题内部随机
+    return [
+        ...shuffle(llosQuestions),
+        ...shuffle(amotivationQuestions),
+        ...shuffle(jungQuestions),
+        ...shuffle(fillerQuestions)
+    ];
 }

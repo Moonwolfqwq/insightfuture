@@ -16,8 +16,7 @@
         .circle-wrapper { cursor: pointer; flex: 1; }
         .circle { width: 30px; height: 30px; border: 2px solid #6C63FF; border-radius: 50%; margin: 0 auto 5px; transition: 0.2s; }
         .circle.active { background: #6C63FF; }
-        .options-container span { font-size: 12px; color: #777; }
-        #quiz-view { display: none; } /* 初始隐藏题目页 */
+        #quiz-view { display: none; }
     </style>
 </head>
 <body>
@@ -34,7 +33,7 @@
         <div class="quiz-container">
             <div class="progress-bar"><div id="progress"></div></div>
             <div id="question-prefix" style="text-align: left; font-size: 14px; color: #888; font-weight: bold; min-height: 20px;"></div>
-            <h2 id="question-text">正在加载题目...</h2>
+            <h2 id="question-text">加载中...</h2>
 
             <div class="options-container" style="display: flex; justify-content: space-between; margin: 30px 0;">
                 <div class="circle-wrapper" data-val="1"><div class="circle"></div><span>非常不符</span></div>
@@ -44,128 +43,88 @@
                 <div class="circle-wrapper" data-val="5"><div class="circle"></div><span>非常符合</span></div>
             </div>
 
-            <button id="next-btn" class="btn" disabled>下一题</button>
+            <button id="next-btn" class="btn" disabled>下一题 (Enter)</button>
+            <p style="font-size: 12px; color: #aaa; margin-top: 15px;">快捷键: 1-5 选择 | Enter 下一步 | Shift 返回</p>
         </div>
     </div>
 
     <script type="module">
-		import { getQuestions } from './questions.js';
+        import { getQuestions } from './questions.js';
 
-		let questions = [];
-		let currentIdx = 0;
-		let userAnswers = []; // 这里存储已提交的答案
+        let questions = [];
+        let currentIdx = 0;
+        let userAnswers = [];
 
-		const startView = document.getElementById('start-view');
-		const quizView = document.getElementById('quiz-view');
-		const usernameInput = document.getElementById('username-input');
-		const startBtn = document.getElementById('start-btn');
-		const nextBtn = document.getElementById('next-btn');
-		const qText = document.getElementById('question-text');
-		const qPrefix = document.getElementById('question-prefix');
-		const circles = document.querySelectorAll('.circle-wrapper');
+        const startView = document.getElementById('start-view');
+        const quizView = document.getElementById('quiz-view');
+        const usernameInput = document.getElementById('username-input');
+        const startBtn = document.getElementById('start-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const circles = document.querySelectorAll('.circle-wrapper');
 
-		// 开始测试
-		startBtn.addEventListener('click', () => {
-			const name = usernameInput.value.trim();
-			if (!name) return alert("请输入姓名");
-			localStorage.setItem('quizUsername', name);
-			
-			startView.style.display = 'none';
-			quizView.style.display = 'block';
-			
-			questions = getQuestions();
-			renderQuestion();
-		});
+        startBtn.addEventListener('click', () => {
+            const name = usernameInput.value.trim();
+            if (!name) return alert("请输入姓名");
+            localStorage.setItem('quizUsername', name);
+            startView.style.display = 'none';
+            quizView.style.display = 'block';
+            questions = getQuestions();
+            renderQuestion();
+        });
 
-		// 渲染题目
-		function renderQuestion() {
-			const q = questions[currentIdx];
-			
-			// 引导语逻辑
-			if (q.part === 'LLOS') {
-				qPrefix.style.display = "block";
-				qPrefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
-			} else {
-				qPrefix.style.display = "none";
-			}
-			
-			qText.innerText = q.text;
-			document.getElementById('progress').style.width = ((currentIdx / questions.length) * 100) + '%';
-			
-			// 重置状态
-			circles.forEach(cw => cw.querySelector('.circle').classList.remove('active'));
-			nextBtn.disabled = true;
-			nextBtn.dataset.value = "";
+        function renderQuestion() {
+            const q = questions[currentIdx];
+            const prefix = document.getElementById('question-prefix');
+            if (q.part === 'LLOS') {
+                prefix.style.display = "block";
+                prefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
+            } else {
+                prefix.style.display = "none";
+            }
+            document.getElementById('question-text').innerText = q.text;
+            document.getElementById('progress').style.width = ((currentIdx / questions.length) * 100) + '%';
+            
+            resetOptions();
+            if (userAnswers[currentIdx]) selectOption(userAnswers[currentIdx].value);
+        }
 
-			// 【新增】回退重新作答逻辑：如果这一题之前做过（回退回来的），恢复之前的选择
-			const previousAnswer = userAnswers[currentIdx];
-			if (previousAnswer) {
-				selectOption(previousAnswer.value);
-			}
-		}
+        function resetOptions() {
+            circles.forEach(c => c.querySelector('.circle').classList.remove('active'));
+            nextBtn.disabled = true;
+        }
 
-		// 选择选项
-		function selectOption(val) {
-			circles.forEach(c => {
-				const circle = c.querySelector('.circle');
-				circle.classList.remove('active');
-				if (c.dataset.val == val) circle.classList.add('active');
-			});
-			nextBtn.disabled = false;
-			nextBtn.dataset.value = val;
-		}
+        function selectOption(val) {
+            resetOptions();
+            circles.forEach(c => {
+                if (c.dataset.val == val) c.querySelector('.circle').classList.add('active');
+            });
+            nextBtn.disabled = false;
+            nextBtn.dataset.value = val;
+        }
 
-		circles.forEach(cw => {
-			cw.addEventListener('click', () => selectOption(cw.dataset.val));
-		});
+        circles.forEach(cw => cw.addEventListener('click', () => selectOption(cw.dataset.val)));
 
-		// 下一题逻辑
-		function handleNext() {
-			if (nextBtn.disabled) return;
-			
-			// 保存或更新当前题目的答案
-			const answer = { id: questions[currentIdx].id, value: nextBtn.dataset.value };
-			userAnswers[currentIdx] = answer; // 使用索引存储，方便回退修改
+        function handleNext() {
+            if (nextBtn.disabled) return;
+            userAnswers[currentIdx] = { id: questions[currentIdx].id, value: nextBtn.dataset.value };
+            currentIdx++;
+            if (currentIdx < questions.length) renderQuestion();
+            else {
+                localStorage.setItem('userAnswers', JSON.stringify(userAnswers));
+                window.location.href = 'results.html';
+            }
+        }
 
-			currentIdx++;
+        nextBtn.addEventListener('click', handleNext);
 
-			if (currentIdx < questions.length) {
-				renderQuestion();
-			} else {
-				localStorage.setItem('userAnswers', JSON.stringify(userAnswers));
-				window.location.href = 'results.html';
-			}
-		}
-
-		// 返回上一题逻辑
-		function handleBack() {
-			if (currentIdx > 0) {
-				currentIdx--;
-				renderQuestion();
-			}
-		}
-
-		nextBtn.addEventListener('click', handleNext);
-
-		// 键盘监听 (1-5, Enter, Shift)
-		document.addEventListener('keydown', (e) => {
-			if (quizView.style.display !== 'block') return;
-
-			// 数字键 1-5
-			if (e.key >= '1' && e.key <= '5') {
-				selectOption(e.key);
-			}
-
-			// Enter 下一题
-			if (e.key === 'Enter') {
-				handleNext();
-			}
-
-			// 【新增】Shift 返回上一题
-			if (e.key === 'Shift') {
-				handleBack();
-			}
-		});
-	</script>
+        document.addEventListener('keydown', (e) => {
+            if (quizView.style.display !== 'block') return;
+            if (e.key >= '1' && e.key <= '5') selectOption(e.key);
+            if (e.key === 'Enter') handleNext();
+            if (e.key === 'Shift') {
+                if (currentIdx > 0) { currentIdx--; renderQuestion(); }
+            }
+        });
+    </script>
 </body>
 </html>

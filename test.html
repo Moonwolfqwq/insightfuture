@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>能力倾向测试</title>
     <style>
-        /* 基础重置：禁止选中文本，移除输入提示符感 */
+        /* 禁止选中文本，移除输入提示符感 */
         * {
             user-select: none;
             -webkit-user-select: none;
@@ -30,11 +30,11 @@
 
         h1 { color: #6C63FF; margin-bottom: 30px; }
 
-        /* 题目字设为黑色 */
+        /* 题目字颜色调黑 */
         h2#question-text { 
             color: #000; 
             font-size: 1.8em; 
-            margin: 40px 0;
+            margin: 20px 0 40px 0;
             line-height: 1.5;
             font-weight: 600;
         }
@@ -66,18 +66,27 @@
         
         .btn-secondary { background: #e8e8ed; color: #555; margin-right: 20px; }
 
+        /* 进度条上方题号 */
+        #question-counter { 
+            text-align: left; 
+            font-size: 16px; 
+            color: #6C63FF; 
+            font-weight: bold; 
+            margin-bottom: 8px; 
+        }
+
         .progress-bar { width: 100%; height: 8px; background: #f0f0f0; border-radius: 4px; margin-bottom: 50px; overflow: hidden; }
         #progress { width: 0%; height: 100%; background: #6C63FF; transition: width 0.4s ease; }
 
-        /* 题号和前缀容器 */
-        .info-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 10px;
+        /* 前缀文字（原来的位置） */
+        #question-prefix { 
+            text-align: center; 
+            font-size: 15px; 
+            color: #999; 
+            font-weight: bold; 
+            min-height: 24px; 
+            margin-bottom: 10px; 
         }
-        #question-counter { font-size: 16px; color: #6C63FF; font-weight: bold; }
-        #question-prefix { font-size: 15px; color: #999; font-weight: bold; }
 
         .options-container { display: flex; justify-content: space-between; margin: 60px 0; }
         
@@ -109,12 +118,10 @@
 
     <div id="quiz-view">
         <div class="quiz-container">
-            <div class="info-header">
-                <div id="question-counter"></div>
-                <div id="question-prefix"></div>
-            </div>
+            <div id="question-counter"></div>
             <div class="progress-bar"><div id="progress"></div></div>
             
+            <div id="question-prefix"></div>
             <h2 id="question-text">加载中...</h2>
 
             <div class="options-container">
@@ -162,15 +169,16 @@
         function renderQuestion() {
             const q = questions[currentIdx];
             
-            // 更新题号显示 (1 / 69 这种格式)
+            // 更新左上角题号
             counter.innerText = `${currentIdx + 1} / ${questions.length}`;
             
-            // 更新前缀
+            // 更新中间位置的前缀引导语
             if (q.part === 'LLOS') {
-                prefix.style.display = "block";
+                prefix.style.visibility = "visible";
                 prefix.innerText = (q.scale === 'Amotivation') ? "关于学习英语，我认为：" : "我学习英语的原因是：";
             } else {
-                prefix.style.display = "none";
+                // 使用 visibility 占据空间，防止切换题目时布局抖动
+                prefix.style.visibility = "hidden";
             }
 
             document.getElementById('question-text').innerText = q.text;

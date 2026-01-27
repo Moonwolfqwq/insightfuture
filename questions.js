@@ -8,7 +8,6 @@ function shuffle(array) {
     return newArray;
 }
 
-// 严格定义 14 个维度的顺序
 export const SCALES_ORDER = [
     'Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation', 
     'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'
@@ -94,5 +93,8 @@ const fillerQuestions = [
 ];
 
 export function getQuestions() {
-    return shuffle([...llosQuestions, ...jungQuestions, ...fillerQuestions]);
+    const part1 = shuffle(llosQuestions);
+    const part2 = shuffle(amotivationQuestions);
+    const part3 = shuffle(jungQuestions);
+    return [...part1, ...part2, ...part3, ...fillerQuestions];
 }

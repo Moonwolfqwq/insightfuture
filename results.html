@@ -5,55 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>测试结果</title>
     <style>
-        /* 统一主题色 #469aa7 */
         body { font-family: -apple-system, sans-serif; text-align: center; background-color: #f4f7f6; color: #333; padding: 20px; }
         .results-container { max-width: 800px; margin: 30px auto; padding: 40px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        
         h1 { color: #469aa7; margin-bottom: 30px; }
-        
-        .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
-        .score-item { 
-            background: #fff; 
-            padding: 20px; 
-            border-radius: 12px; 
-            border: 1px solid #eee;
-            border-left: 5px solid #469aa7; 
-            display: flex; 
-            flex-direction: column;
-            align-items: center;
-        }
-        .dim-name { font-weight: bold; font-size: 1.2em; margin-bottom: 5px; }
-        .dim-val { color: #469aa7; font-weight: bold; font-size: 1.1em; }
-        
+        .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .score-item { padding: 20px; border-radius: 12px; border-left: 5px solid #469aa7; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .dim-name { font-weight: bold; display: block; }
+        .dim-val { color: #469aa7; font-size: 1.2em; font-weight: bold; }
+
+        /* 立体按钮 */
         .btn { 
             display: inline-block; margin-top: 40px; background: #469aa7; color: white; 
-            padding: 15px 40px; border-radius: 35px; text-decoration: none; font-weight: bold;
-            transition: transform 0.2s;
+            padding: 15px 45px; border-radius: 35px; text-decoration: none; font-weight: bold;
+            box-shadow: 0 5px 0 #367d88; transition: all 0.1s;
         }
-        .btn:active { transform: scale(0.95); }
+        .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #367d88; }
     </style>
 </head>
 <body>
     <div class="results-container">
         <h1>您的测评结果</h1>
-        <p style="color: #666; margin-bottom: 30px;">（基于能量分配比例的百分制得分）</p>
         <div id="jung-scores" class="score-grid"></div>
         <a href="index.html" class="btn">重新测试</a>
     </div>
 
     <script type="module">
         import { getQuestions } from './questions.js';
-
         const userAnswers = JSON.parse(localStorage.getItem('userAnswers') || '[]');
         const allQuestions = getQuestions();
 
         function calculateScores(answers, questions) {
             const jungScales = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
-            let rawScores = {};
+            let rawScores = {}, totalRawPoints = 0;
             jungScales.forEach(s => rawScores[s] = 0);
 
-            // 1. 统计原始总分
-            let totalRawPoints = 0;
             answers.forEach(ans => {
                 const q = questions.find(item => item.id === parseInt(ans.id));
                 if (q && q.part === 'Jung') {
@@ -63,27 +48,19 @@
                 }
             });
 
-            // 2. 归一化处理 (基于占比分配分数)
-            // 如果用户全部选1（最低分），避免除以0
-            if (totalRawPoints === 0) totalRawPoints = jungScales.length;
-
             const finalScores = {};
+            const divisor = totalRawPoints || 1;
             jungScales.forEach(s => {
-                // 计算该维度占总能量的百分比
-                // 假设“完美平衡”时每个维度是 1/8 (12.5%)，对应约 50分
-                // 逻辑：(该维度原始分 / 总原始分) * 维度总数 * 50
-                // 这样当你只有一个选5，其他选1时，那个5的得分会逼近100，其他会极低
-                let normalized = (rawScores[s] / totalRawPoints) * jungScales.length * 12.5;
-                finalScores[s] = Math.min(100, (normalized * 8).toFixed(1)); 
+                // 计分逻辑：基于总能量占比的百分制
+                let normalized = (rawScores[s] / divisor) * 100;
+                finalScores[s] = normalized.toFixed(1);
             });
-
             return finalScores;
         }
 
         const scores = calculateScores(userAnswers, allQuestions);
         const container = document.getElementById('jung-scores');
-
-        ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'].forEach(s => {
+        Object.keys(scores).forEach(s => {
             const div = document.createElement('div');
             div.className = 'score-item';
             div.innerHTML = `<span class="dim-name">${s}</span><span class="dim-val">${scores[s]}</span>`;

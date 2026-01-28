@@ -99,7 +99,7 @@
             right: 10px;
             top: 50%;
             transform: translateY(-50%);
-            color: #888;
+            color: #A38F86;
             font-size: 11px;
             font-weight: bold;
         }
@@ -117,10 +117,13 @@
     <script type="module">
         import { getQuestions } from './questions.js';
 
+        // 获取答案并立即清空 DOM 防止残留
+        const chart = document.getElementById('chart');
+        chart.innerHTML = ''; 
+
         const userAnswers = JSON.parse(localStorage.getItem('userAnswers') || '[]');
         const allQuestions = getQuestions();
 
-        // 维度的中文释义
         const descMap = {
             'Ne': '外倾直觉', 'Ni': '内倾直觉',
             'Se': '外倾感觉', 'Si': '内倾感觉',
@@ -128,10 +131,8 @@
             'Te': '外倾思考', 'Ti': '内倾思考'
         };
 
-        function calculateJungBalanced(answers, questions) {
-            // 定义计算逻辑所需的维度
+        function calculateJungIpsative(answers, questions) {
             const scales = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
-            const TOTAL_ENERGY = 240; 
             let raw = {};
             scales.forEach(s => raw[s] = 0);
 
@@ -147,24 +148,32 @@
 
             const finalScores = {};
             const divisor = sumRaw || 1;
+            
+            // 计算 Ipsative：每个维度的贡献比例
+            // 我们假设如果某个维度占总分的 25% 以上就算很强
             scales.forEach(s => {
-                let share = (raw[s] / divisor) * TOTAL_ENERGY;
+                let share = (raw[s] / divisor) * 100; // 转化为百分比(0-100)
                 finalScores[s] = share.toFixed(1);
             });
             return finalScores;
         }
 
-        const scores = calculateJungBalanced(userAnswers, allQuestions);
-        const chart = document.getElementById('chart');
+        const scores = calculateJungIpsative(userAnswers, allQuestions);
 
-        // 按照指定的顺序显示：Ne, Ni, Se, Si, Fe, Fi, Te, Ti
+        // 按照指定的顺序显示
         const order = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
+
+        // --- 关键修改：调整视觉满分基准 ---
+        // 因为8个维度平摊是12.5%，如果某个维度达到 20%-25% 就已经是极强了
+        // 设置 MAX_VISUAL 为 25，意味着达到 25% 进度条就全满，这样视觉效果最好
+        const MAX_VISUAL = 25; 
 
         order.forEach(s => {
             const item = document.createElement('div');
             item.className = 'bar-item';
-            // 比例尺计算：基于 100 分作为能量条最大视觉长度参考
-            const percentage = Math.min(100, (scores[s] / 100) * 100);
+            
+            // 计算视觉宽度：(当前占比 / 25) * 100
+            const percentage = Math.min(100, (parseFloat(scores[s]) / MAX_VISUAL) * 100);
 
             item.innerHTML = `
                 <div class="label-box">
@@ -173,7 +182,7 @@
                 </div>
                 <div class="bar-track">
                     <div class="bar-fill" style="width: 0%" data-percent="${percentage}">
-                        <span class="bar-val">${scores[s]}</span>
+                        <span class="bar-val">${scores[s]}%</span>
                     </div>
                 </div>
             `;

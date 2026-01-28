@@ -228,47 +228,48 @@
         }
 
         async function uploadResults() {
-            isSubmitting = true; // 开启提交状态，防止 beforeunload 拦截
+            if (isSubmitting) return; 
+            isSubmitting = true;
             nextBtn.disabled = true;
-            nextBtn.innerText = "计算中...";
-            
-            let username = document.getElementById('username-input').value.trim() || "被试";
 
-            // 严格匹配后端 SCALES_ORDER
+            const username = document.getElementById('username-input').value.trim() || "被试";
             const scales = ['Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation', 'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
             let scores = {};
-            scales.forEach(s => scores[s] = 0); // 确保 14 个维度全部初始化为 0
-            
+            scales.forEach(s => scores[s] = 0);
+
+            // 累加总分
             userAnswers.forEach(ans => {
                 const q = questions.find(item => item.id === parseInt(ans.id));
-                // 只有当题目对应的 scale 在这 14 个维度中时才累加分数
-                if (q && scores.hasOwnProperty(q.scale)) {
-                    scores[q.scale] += parseInt(ans.value);
-                }
+                if (q && scores.hasOwnProperty(q.scale)) scores[q.scale] += parseInt(ans.value);
             });
+
+            // 计算 Normative 平均分 (1-5分)
+            const divMap = {
+                'Intrinsic': 7, 'Integrated': 5, 'Identified': 5, 'Introjected': 5, 'External': 5, 'Amotivation': 5,
+                'Ne': 4, 'Ni': 4, 'Se': 4, 'Si': 4, 'Fe': 4, 'Fi': 4, 'Te': 4, 'Ti': 4
+            };
+
+            Object.keys(scores).forEach(key => {
+                const average = scores[key] / (divMap[key] || 1);
+                scores[key] = parseFloat(average.toFixed(1)); 
+            });
+
+            // 将计算好的原始平均分存入 localStorage 供结果页使用
+            localStorage.setItem('normative_scores', JSON.stringify(scores));
 
             try {
                 const response = await fetch('/.netlify/functions/save_data', { 
                     method: 'POST', 
-                    headers: { 
-                        'Content-Type': 'application/json' // 必须显式声明 JSON 格式
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, scores }) 
                 });
-
                 if (response.ok) {
-                    localStorage.removeItem('quiz_progress'); // 清除可能的进度缓存
+                    localStorage.removeItem('quiz_answers'); 
                     window.location.href = 'results.html';
-                } else {
-                    const errorText = await response.text();
-                    throw new Error(errorText || "提交失败");
-                }
-            } catch (err) { 
-                console.error("提交出错:", err);
-                alert("保存失败: " + err.message); 
-                isSubmitting = false; 
-                nextBtn.disabled = false; 
-                nextBtn.innerText = "计算结果";
+                } else { throw new Error("提交失败"); }
+            } catch (err) {
+                isSubmitting = false;
+                nextBtn.disabled = false;
             }
         }
 

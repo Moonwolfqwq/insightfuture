@@ -228,6 +228,18 @@
         }
 
         async function uploadResults() {
+
+            if (response.ok) {
+                // 先把最新的平均分存进去
+                localStorage.setItem('normative_scores', JSON.stringify(scores));
+                // 彻底移除旧的答案数组，防止结果页读取旧答案重新计算
+                localStorage.removeItem('userAnswers'); 
+                // 标记这是一个新生成的结果
+                localStorage.setItem('has_new_result', 'true');
+                
+                window.location.href = 'results.html';
+            }
+
             if (isSubmitting) return; 
             isSubmitting = true;
             nextBtn.disabled = true;

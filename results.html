@@ -76,15 +76,6 @@
             margin-top: 2px;
         }
 
-        .bar-track {
-            flex: 1;
-            height: 18px;
-            background: #eee;
-            border-radius: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-
         .bar-fill {
             height: 100%;
             background: #b5d9dc; /* 条型填充色 */
@@ -96,12 +87,21 @@
 
         .bar-val {
             position: absolute;
-            right: 10px;
+            right: 8px; /* 距离条条右侧一点点 */
             top: 50%;
             transform: translateY(-50%);
-            color: #A38F86;
+            color: white;
             font-size: 11px;
             font-weight: bold;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 18px;
+            background: #eee; /* 底色稍微深一点，方便看清数字 */
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -117,84 +117,66 @@
     <script type="module">
         import { getQuestions } from './questions.js';
 
-        // 获取答案并立即清空 DOM 防止残留
+        // 强制清空容器并停止旧动画
         const chart = document.getElementById('chart');
         chart.innerHTML = ''; 
 
-        const userAnswers = JSON.parse(localStorage.getItem('userAnswers') || '[]');
-        const allQuestions = getQuestions();
+        // 获取数据：优先取 test.html 刚算好的平均分
+        let rawScores = JSON.parse(localStorage.getItem('normative_scores'));
 
-        const descMap = {
-            'Ne': '外倾直觉', 'Ni': '内倾直觉',
-            'Se': '外倾感觉', 'Si': '内倾感觉',
-            'Fe': '外倾情感', 'Fi': '内倾情感',
-            'Te': '外倾思考', 'Ti': '内倾思考'
-        };
-
-        function calculateJungIpsative(answers, questions) {
-            const scales = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
-            let raw = {};
-            scales.forEach(s => raw[s] = 0);
-
-            let sumRaw = 0;
-            answers.forEach(ans => {
-                const q = questions.find(item => item.id === parseInt(ans.id));
-                if (q && q.part === 'Jung') {
-                    const val = parseInt(ans.value);
-                    raw[q.scale] += val;
-                    sumRaw += val;
-                }
-            });
-
-            const finalScores = {};
-            const divisor = sumRaw || 1;
-            
-            // 计算 Ipsative：每个维度的贡献比例
-            // 我们假设如果某个维度占总分的 25% 以上就算很强
-            scales.forEach(s => {
-                let share = (raw[s] / divisor) * 100; // 转化为百分比(0-100)
-                finalScores[s] = share.toFixed(1);
-            });
-            return finalScores;
+        // 如果没有预计算的平均分，才 fallback 到用原始答案计算（兼容直接刷新的情况）
+        if (!rawScores) {
+            const userAnswers = JSON.parse(localStorage.getItem('userAnswers') || '[]');
+            const allQuestions = getQuestions();
+            // 这里调用你原来的计算平均分逻辑...
         }
 
-        const scores = calculateJungIpsative(userAnswers, allQuestions);
+        const descMap = {
+            'Ne': '外倾直觉', 'Ni': '内倾直觉', 'Se': '外倾感觉', 'Si': '内倾感觉',
+            'Fe': '外倾情感', 'Fi': '内倾情感', 'Te': '外倾思考', 'Ti': '内倾思考'
+        };
 
-        // 按照指定的顺序显示
         const order = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
 
-        // --- 关键修改：调整视觉满分基准 ---
-        // 因为8个维度平摊是12.5%，如果某个维度达到 20%-25% 就已经是极强了
-        // 设置 MAX_VISUAL 为 25，意味着达到 25% 进度条就全满，这样视觉效果最好
-        const MAX_VISUAL = 25; 
+        // 计算 Ipsative (占比)
+        let jungTotal = 0;
+        order.forEach(s => jungTotal += (parseFloat(rawScores[s]) || 0));
+        const safeTotal = jungTotal || 1;
 
+        // 定义视觉填充基准 (比如占比达到 20 时条条就非常满)
+        const MAX_VISUAL = 20; 
+
+        // 执行渲染
         order.forEach(s => {
+            const scoreVal = parseFloat(rawScores[s]) || 0;
+            // 计算 Ipsative 数值 (0-100的占比)
+            const share = ((scoreVal / safeTotal) * 100).toFixed(1);
+            // 计算条形图宽度
+            const barWidth = Math.min(100, (share / MAX_VISUAL) * 100);
+
             const item = document.createElement('div');
             item.className = 'bar-item';
-            
-            // 计算视觉宽度：(当前占比 / 25) * 100
-            const percentage = Math.min(100, (parseFloat(scores[s]) / MAX_VISUAL) * 100);
-
             item.innerHTML = `
                 <div class="label-box">
                     <span class="dim-name">${s}</span>
                     <span class="dim-desc">${descMap[s]}</span>
                 </div>
                 <div class="bar-track">
-                    <div class="bar-fill" style="width: 0%" data-percent="${percentage}">
-                        <span class="bar-val">${scores[s]}%</span>
+                    <div class="bar-fill" style="width: 0%" data-percent="${barWidth}">
+                        <span class="bar-val">${share}</span>
                     </div>
                 </div>
             `;
             chart.appendChild(item);
         });
 
-        // 触发滑出动画
+        // 强制清除“新结果”标记并延迟触发动画
+        localStorage.removeItem('has_new_result');
         setTimeout(() => {
             document.querySelectorAll('.bar-fill').forEach(bar => {
                 bar.style.width = bar.dataset.percent + '%';
             });
-        }, 100);
+        }, 50);
     </script>
 </body>
 </html>

@@ -3,42 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>测试结果</title>
+    <title>Archego | 问卷结果</title>
+	<link rel="icon" href="logo.jpg" type="image/png">
+
     <style>
-        /* 统一主题色 #469aa7 */
-        body { font-family: -apple-system, sans-serif; text-align: center; background-color: #f4f7f6; color: #333; padding: 20px; }
-        .results-container { max-width: 800px; margin: 30px auto; padding: 40px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        /* 全局禁止选中 */
+        * { user-select: none; -webkit-user-select: none; box-sizing: border-box; }
         
-        h1 { color: #469aa7; margin-bottom: 30px; }
-        
-        .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
-        .score-item { 
-            background: #fff; 
-            padding: 20px; 
-            border-radius: 12px; 
-            border: 1px solid #eee;
-            border-left: 5px solid #469aa7; 
-            display: flex; 
-            flex-direction: column;
+        body { 
+            font-family: -apple-system, sans-serif; 
+            background-color: #f4f7f6; 
+            color: #333; 
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
             align-items: center;
+            min-height: 100vh;
+
+			background-image: url('bg_image.jpg');
+			background-size: cover;
+			background-position: center;
+			background-attachment: fixed;
+			background-repeat: no-repeat;
         }
-        .dim-name { font-weight: bold; font-size: 1.2em; margin-bottom: 5px; }
-        .dim-val { color: #469aa7; font-weight: bold; font-size: 1.1em; }
-        
-        .btn { 
-            display: inline-block; margin-top: 40px; background: #469aa7; color: white; 
-            padding: 15px 40px; border-radius: 35px; text-decoration: none; font-weight: bold;
-            transition: transform 0.2s;
+
+        .results-container { 
+            width: 100%;
+            max-width: 900px; 
+            padding: 50px 40px; 
+            background: rgba(255, 255, 255, 0.7); 
+            border-radius: 24px; 
+            box-shadow: 0 4px 30px rgba(0,0,0,0.04); 
         }
-        .btn:active { transform: scale(0.95); }
+
+        h1 { color: #469aa7; margin-bottom: 10px; font-size: 2em; text-align: center; }
+        .thank-you { color: #888; font-size: 1.1em; margin-bottom: 50px; text-align: center; }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* 左侧标签 */
+        .label-box {
+            width: 110px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .dim-name {
+            display: block;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #469aa7; /* 青色字样 */
+        }
+
+        .dim-desc {
+            display: block;
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 18px;
+            background: #eee;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #ffcc00; /* 条型填充色 */
+            border-radius: 10px;
+            width: 0%; 
+            transition: width 1s cubic-bezier(0.1, 0.5, 0.3, 1);
+            position: relative;
+        }
+
+        .bar-val {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="results-container">
-        <h1>您的测评结果</h1>
-        <p style="color: #666; margin-bottom: 30px;">（基于能量分配比例的百分制得分）</p>
-        <div id="jung-scores" class="score-grid"></div>
-        <a href="index.html" class="btn">重新测试</a>
+        <h1>你的认知功能分布</h1>
+        <p class="thank-you">感谢填写问卷</p>
+        
+        <div id="chart" class="chart-container">
+            </div>
     </div>
 
     <script type="module">
@@ -47,48 +120,72 @@
         const userAnswers = JSON.parse(localStorage.getItem('userAnswers') || '[]');
         const allQuestions = getQuestions();
 
-        function calculateScores(answers, questions) {
-            const jungScales = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
-            let rawScores = {};
-            jungScales.forEach(s => rawScores[s] = 0);
+        // 维度的中文释义
+        const descMap = {
+            'Ne': '外倾直觉', 'Ni': '内倾直觉',
+            'Se': '外倾感觉', 'Si': '内倾感觉',
+            'Fe': '外倾情感', 'Fi': '内倾情感',
+            'Te': '外倾思考', 'Ti': '内倾思考'
+        };
 
-            // 1. 统计原始总分
-            let totalRawPoints = 0;
+        function calculateJungBalanced(answers, questions) {
+            // 定义计算逻辑所需的维度
+            const scales = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
+            const TOTAL_ENERGY = 240; 
+            let raw = {};
+            scales.forEach(s => raw[s] = 0);
+
+            let sumRaw = 0;
             answers.forEach(ans => {
                 const q = questions.find(item => item.id === parseInt(ans.id));
                 if (q && q.part === 'Jung') {
                     const val = parseInt(ans.value);
-                    rawScores[q.scale] += val;
-                    totalRawPoints += val;
+                    raw[q.scale] += val;
+                    sumRaw += val;
                 }
             });
 
-            // 2. 归一化处理 (基于占比分配分数)
-            // 如果用户全部选1（最低分），避免除以0
-            if (totalRawPoints === 0) totalRawPoints = jungScales.length;
-
             const finalScores = {};
-            jungScales.forEach(s => {
-                // 计算该维度占总能量的百分比
-                // 假设“完美平衡”时每个维度是 1/8 (12.5%)，对应约 50分
-                // 逻辑：(该维度原始分 / 总原始分) * 维度总数 * 50
-                // 这样当你只有一个选5，其他选1时，那个5的得分会逼近100，其他会极低
-                let normalized = (rawScores[s] / totalRawPoints) * jungScales.length * 12.5;
-                finalScores[s] = Math.min(100, (normalized * 8).toFixed(1)); 
+            const divisor = sumRaw || 1;
+            scales.forEach(s => {
+                let share = (raw[s] / divisor) * TOTAL_ENERGY;
+                finalScores[s] = share.toFixed(1);
             });
-
             return finalScores;
         }
 
-        const scores = calculateScores(userAnswers, allQuestions);
-        const container = document.getElementById('jung-scores');
+        const scores = calculateJungBalanced(userAnswers, allQuestions);
+        const chart = document.getElementById('chart');
 
-        ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'].forEach(s => {
-            const div = document.createElement('div');
-            div.className = 'score-item';
-            div.innerHTML = `<span class="dim-name">${s}</span><span class="dim-val">${scores[s]}</span>`;
-            container.appendChild(div);
+        // 按照指定的顺序显示：Ne, Ni, Se, Si, Fe, Fi, Te, Ti
+        const order = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
+
+        order.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'bar-item';
+            // 比例尺计算：基于 100 分作为能量条最大视觉长度参考
+            const percentage = Math.min(100, (scores[s] / 100) * 100);
+
+            item.innerHTML = `
+                <div class="label-box">
+                    <span class="dim-name">${s}</span>
+                    <span class="dim-desc">${descMap[s]}</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width: 0%" data-percent="${percentage}">
+                        <span class="bar-val">${scores[s]}</span>
+                    </div>
+                </div>
+            `;
+            chart.appendChild(item);
         });
+
+        // 触发滑出动画
+        setTimeout(() => {
+            document.querySelectorAll('.bar-fill').forEach(bar => {
+                bar.style.width = bar.dataset.percent + '%';
+            });
+        }, 100);
     </script>
 </body>
 </html>

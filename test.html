@@ -169,10 +169,9 @@
 
         startBtn.addEventListener('click', () => {
             triggerHaptic();
-            // 修改点：进入测试时确保 userAnswers 彻底清空
             localStorage.removeItem('quiz_answers'); 
-            userAnswers = []; 
-            currentIdx = 0;
+            userAnswers = []; // 显式清空数组
+            currentIdx = 0;   // 进度重置
 
             document.getElementById('start-view').style.display = 'none';
             document.getElementById('quiz-view').style.display = 'block';
@@ -229,30 +228,36 @@
         }
 
         async function uploadResults() {
-            isSubmitting = true; 
+            isSubmitting = true; // 开启提交状态，防止 beforeunload 拦截
             nextBtn.disabled = true;
             nextBtn.innerText = "计算中...";
             
             let username = document.getElementById('username-input').value.trim() || "被试";
 
+            // 严格匹配后端 SCALES_ORDER
             const scales = ['Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation', 'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
             let scores = {};
-            scales.forEach(s => scores[s] = 0);
+            scales.forEach(s => scores[s] = 0); // 确保 14 个维度全部初始化为 0
             
             userAnswers.forEach(ans => {
                 const q = questions.find(item => item.id === parseInt(ans.id));
-                if (q) scores[q.scale] += parseInt(ans.value);
+                // 只有当题目对应的 scale 在这 14 个维度中时才累加分数
+                if (q && scores.hasOwnProperty(q.scale)) {
+                    scores[q.scale] += parseInt(ans.value);
+                }
             });
 
             try {
                 const response = await fetch('/.netlify/functions/save_data', { 
                     method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json' // 必须显式声明 JSON 格式
+                    },
                     body: JSON.stringify({ username, scores }) 
                 });
 
                 if (response.ok) {
-                    localStorage.removeItem('quiz_progress'); 
+                    localStorage.removeItem('quiz_progress'); // 清除可能的进度缓存
                     window.location.href = 'results.html';
                 } else {
                     const errorText = await response.text();

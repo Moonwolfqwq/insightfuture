@@ -33,7 +33,7 @@ const llosQuestions = [
     { id: 18, part: 'LLOS', scale: 'Introjected', text: '因为我感到自己有义务学习英语。' },
     { id: 19, part: 'LLOS', scale: 'Introjected', text: '因为如果我不能用英语与英语使用者交流，我会感到羞愧。' },
     { id: 20, part: 'LLOS', scale: 'Introjected', text: '因为如果我不懂这门语言，我会感到尴尬。' },
-    { id: 21, part: 'LLOS', scale: 'Introjected', text: '为了向自己证明我是一个合格的公民，因为我会说英语。' },
+    { id: 21, part: 'LLOS', scale: 'Introjected', text: '因为掌握第二语言能让我确认自己是合格的社会成员。' },
     { id: 22, part: 'LLOS', scale: 'Introjected', text: '因为会说英语会让我看起来更优秀。' },
     { id: 23, part: 'LLOS', scale: 'External', text: '为了获得课程学分。' },
     { id: 24, part: 'LLOS', scale: 'External', text: '因为别人要求我这样做。' },

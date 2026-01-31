@@ -169,7 +169,6 @@
 
         startBtn.addEventListener('click', () => {
             triggerHaptic();
-            localStorage.removeItem('quiz_answers'); 
             userAnswers = []; // 显式清空数组
             currentIdx = 0;   // 进度重置
 
@@ -231,6 +230,7 @@
             if (isSubmitting) return; 
             isSubmitting = true;
             nextBtn.disabled = true;
+            nextBtn.innerText = "提交中...";
 
             const username = document.getElementById('username-input').value.trim() || "被试";
             const scales = ['Intrinsic', 'Integrated', 'Identified', 'Introjected', 'External', 'Amotivation', 'Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
@@ -254,23 +254,29 @@
                 scores[key] = parseFloat(average.toFixed(1)); 
             });
 
-            // 将计算好的原始平均分存入 localStorage 供结果页使用
-            localStorage.setItem('normative_scores', JSON.stringify(scores));
-
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+
                 const response = await fetch('/.netlify/functions/save_data', { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, scores }) 
+                    body: JSON.stringify({ username, scores }),
+                    signal: controller.signal 
                 });
 
+                clearTimeout(timeoutId);
+
                 if (response.ok) {
-                    localStorage.removeItem('userAnswers'); 
                     window.location.href = 'results.html';
-                } else { throw new Error("提交失败"); }
+                } else {
+                    throw new Error(`服务器相应异常`); 
+                }
             } catch (err) {
                 isSubmitting = false;
                 nextBtn.disabled = false;
+                nextBtn.innerText = "重新提交";
+                alert("提交失败，请检查网络或稍后重试。");
             }
         }
 

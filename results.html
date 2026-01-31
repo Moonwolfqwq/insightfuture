@@ -3,180 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Archego | 问卷结果</title>
-	<link rel="icon" href="logo.jpg" type="image/png">
-
+    <title>Archego | 提交成功</title>
+    <link rel="icon" href="logo.jpg" type="image/png">
     <style>
-        /* 全局禁止选中 */
-        * { user-select: none; -webkit-user-select: none; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
             font-family: -apple-system, sans-serif; 
             background-color: #f4f7f6; 
-            color: #333; 
-            margin: 0;
-            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-
-			background-image: url('bg_image.jpg');
-			background-size: cover;
-			background-position: center;
-			background-attachment: fixed;
-			background-repeat: no-repeat;
+            background-image: url('bg_image.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
 
         .results-container { 
-            width: 100%;
-            max-width: 900px; 
-            padding: 50px 40px; 
-            background: rgba(255, 255, 255, 0.7); 
+            width: 90%;
+            max-width: 500px; 
+            padding: 30px; 
+            background: rgba(255, 255, 255, 0.9); 
             border-radius: 24px; 
-            box-shadow: 0 4px 30px rgba(0,0,0,0.04); 
-        }
-
-        h1 { color: #469aa7; margin-bottom: 10px; font-size: 2em; text-align: center; }
-        .thank-you { color: #888; font-size: 1.1em; margin-bottom: 50px; text-align: center; }
-
-        .chart-container {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .bar-item {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        /* 左侧标签 */
-        .label-box {
-            width: 110px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1); 
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
-        .dim-name {
-            display: block;
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #469aa7; /* 青色字样 */
+        h1 { color: #469aa7; margin-bottom: 10px; font-size: 1.5em; }
+        .thank-you { color: #666; font-size: 1em; margin-bottom: 25px; }
+
+        .reward-image {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            -webkit-touch-callout: default; 
         }
 
-        .dim-desc {
-            display: block;
-            font-size: 0.85em;
-            color: #999;
-            margin-top: 2px;
-        }
-
-        .bar-fill {
-            height: 100%;
-            background: #b5d9dc; /* 条型填充色 */
-            border-radius: 10px;
-            width: 0%; 
-            transition: width 1s cubic-bezier(0.1, 0.5, 0.3, 1);
-            position: relative;
-        }
-
-        .bar-val {
-            position: absolute;
-            right: 8px; /* 距离条条右侧一点点 */
-            top: 50%;
-            transform: translateY(-50%);
-            color: white;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .bar-track {
-            flex: 1;
-            height: 18px;
-            background: #eee; /* 底色稍微深一点，方便看清数字 */
-            border-radius: 10px;
-            position: relative;
-            overflow: hidden;
+        .hint {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #888;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
     <div class="results-container">
-        <h1>你的认知功能分布</h1>
-        <p class="thank-you">感谢填写问卷</p>
+        <h1>提交成功</h1>
+        <p class="thank-you">感谢参与！请扫描下方二维码参与抽奖</p>
         
-        <div id="chart" class="chart-container">
-            </div>
+        <img src="reward_image.jpg" alt="reward" class="reward-image">
+
+        <div class="hint">
+            <p>长按图片保存到相册</p>
+            <p>或在微信中识别二维码参与</p>
+        </div>
     </div>
 
-    <script type="module">
-        import { getQuestions } from './questions.js';
-
-        // 强制清空容器并停止旧动画
-        const chart = document.getElementById('chart');
-        chart.innerHTML = ''; 
-
-        // 获取数据：优先取 test.html 刚算好的平均分
-        let rawScores = JSON.parse(localStorage.getItem('normative_scores'));
-
-        // 如果没有预计算的平均分，才 fallback 到用原始答案计算（兼容直接刷新的情况）
-        if (!rawScores) {
-            const userAnswers = JSON.parse(localStorage.getItem('userAnswers') || '[]');
-            const allQuestions = getQuestions();
-            // 这里调用你原来的计算平均分逻辑...
-        }
-
-        const descMap = {
-            'Ne': '外倾直觉', 'Ni': '内倾直觉', 'Se': '外倾感觉', 'Si': '内倾感觉',
-            'Fe': '外倾情感', 'Fi': '内倾情感', 'Te': '外倾思考', 'Ti': '内倾思考'
-        };
-
-        const order = ['Ne', 'Ni', 'Se', 'Si', 'Fe', 'Fi', 'Te', 'Ti'];
-
-        // 计算 Ipsative (占比)
-        let jungTotal = 0;
-        order.forEach(s => jungTotal += (parseFloat(rawScores[s]) || 0));
-        const safeTotal = jungTotal || 1;
-
-        // 定义视觉填充基准 (比如占比达到 20 时条条就非常满)
-        const MAX_VISUAL = 20; 
-
-        // 执行渲染
-        order.forEach(s => {
-            const scoreVal = parseFloat(rawScores[s]) || 0;
-            // 计算 Ipsative 数值 (0-100的占比)
-            const share = ((scoreVal / safeTotal) * 100).toFixed(1);
-            // 计算条形图宽度
-            const barWidth = Math.min(100, (share / MAX_VISUAL) * 100);
-
-            const item = document.createElement('div');
-            item.className = 'bar-item';
-            item.innerHTML = `
-                <div class="label-box">
-                    <span class="dim-name">${s}</span>
-                    <span class="dim-desc">${descMap[s]}</span>
-                </div>
-                <div class="bar-track">
-                    <div class="bar-fill" style="width: 0%" data-percent="${barWidth}">
-                        <span class="bar-val">${share}</span>
-                    </div>
-                </div>
-            `;
-            chart.appendChild(item);
-        });
-
-        // 强制清除“新结果”标记并延迟触发动画
-        localStorage.removeItem('has_new_result');
-        setTimeout(() => {
-            document.querySelectorAll('.bar-fill').forEach(bar => {
-                bar.style.width = bar.dataset.percent + '%';
-            });
-        }, 50);
+    <script>
+        // 清理本地数据，防止重复提交
+        localStorage.clear();
     </script>
 </body>
 </html>

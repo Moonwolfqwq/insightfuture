@@ -188,7 +188,7 @@
                 mainContent.style.display = "none";
                 nameView.style.display = "block";
                 backBtn.style.display = "inline-block";
-                nextBtn.innerText = "计算结果";
+                nextBtn.innerText = "提交结果";
                 nextBtn.disabled = false;
                 return;
             }
@@ -263,15 +263,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, scores }) 
                 });
+
                 if (response.ok) {
-                // 先把最新的平均分存进去
-                localStorage.setItem('normative_scores', JSON.stringify(scores));
-                // 彻底移除旧的答案数组，防止结果页读取旧答案重新计算
-                localStorage.removeItem('userAnswers'); 
-                // 标记这是一个新生成的结果
-                localStorage.setItem('has_new_result', 'true');
-                
-                window.location.href = 'results.html';
+                    localStorage.removeItem('userAnswers'); 
+                    window.location.href = 'results.html';
                 } else { throw new Error("提交失败"); }
             } catch (err) {
                 isSubmitting = false;
